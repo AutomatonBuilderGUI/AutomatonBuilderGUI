@@ -9,7 +9,7 @@ import SelectableObject from './SelectableObject';
 import DetailsBox from './components/DetailsBox/DetailsBox';
 import ModalWindow, { ClosableModalWindow } from './components/ModalWindow';
 import ConfigureAutomatonWindow from './components/ConfigureAutomatonWindow';
-import { BsGearFill } from 'react-icons/bs';
+import { BsGearFill, BsMoonFill } from 'react-icons/bs';
 
 function App() {
     const [currentTool, setCurrentTool] = useState(Tool.States);
@@ -60,34 +60,51 @@ function App() {
     const [configWindowOpen, setConfigWindowOpen] = useState(false);
     const openConfigWindow = () => { setConfigWindowOpen(true); };
     const closeConfigWindow = () => { setConfigWindowOpen(false); };
-        return (
-            <>
-                <NodeView />
-                <div className='flex flex-row h-screen text-center'>
-                    <div style={{ width: '300px' }}> {/* Set a fixed width for the properties panel */}
-                        <FloatingPanel heightPolicy='min'>
-                            <DetailsBox
-                                selection={selectedObjects}
-                                startNode={startNode}
-                                setStartNode={setStartNode}
-                            />
-                            <button className="rounded-full p-2 m-1 mx-2 block bg-amber-500 text-white text-center" onClick={openConfigWindow}>
+    const [useDarkMode, setDarkMode] = useState(false);
+    const toggleDarkMode = () => { setDarkMode(!useDarkMode); };
+    useEffect(() => {
+        StateManager.useDarkMode = useDarkMode;
+    }, [useDarkMode]);
+    return (<div className={useDarkMode ? 'dark' : ''}>
+            <NodeView />
+            <div className='flex flex-row h-screen text-center'>
+                <div style={{ width: '300px' }}>
+                    <FloatingPanel heightPolicy='min'>
+                        <DetailsBox
+                            selection={selectedObjects}
+                            startNode={startNode}
+                            setStartNode={setStartNode}
+                        />
+                        <div className="flex flex-col items-center mt-4">
+                            <button
+                                className="rounded-full p-2 m-1 mx-2 block bg-amber-500 text-white text-center"
+                                onClick={openConfigWindow}
+                            >
                                 <div className='flex flex-row items-center place-content-center mx-2'>
                                     <BsGearFill className='mr-1' />
                                     Configure Automaton
                                 </div>
                             </button>
-                        </FloatingPanel>
-                    </div>
-                    <FloatingPanel heightPolicy='min'>
-                        <Toolbox currentTool={currentTool} setCurrentTool={setCurrentTool} />
+                            {/* Add your dark mode button here */}
+                            {/* For example: */}
+                            <button  className="rounded-full p-2 m-1 mx-2 block bg-gray-500 text-white text-center" onClick={toggleDarkMode}>
+                                <div className='flex flex-row items-center place-content-center mx-2'>
+                                <BsMoonFill className='mr-1' />
+                                Dark Mode
+                                </div>
+                            </button>
+                        </div>
                     </FloatingPanel>
                 </div>
-    
-                {configWindowOpen ? <ClosableModalWindow title='Configure Automaton' close={closeConfigWindow}><ConfigureAutomatonWindow /></ClosableModalWindow> : <></>}
-            </>
-        );
-    }
+                <FloatingPanel heightPolicy='min'>
+                    <Toolbox currentTool={currentTool} setCurrentTool={setCurrentTool} />
+                </FloatingPanel>
+            </div>
+
+            {configWindowOpen ? <ClosableModalWindow title='Configure Automaton' close={closeConfigWindow}><ConfigureAutomatonWindow /></ClosableModalWindow> : <></>}
+            </div>
+    );
+}
 
 const domNode = document.getElementById('react-root');
 const root = createRoot(domNode);
