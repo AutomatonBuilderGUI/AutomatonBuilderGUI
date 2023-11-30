@@ -19,6 +19,12 @@ function App() {
     // Switch current tool when keys pressed
     useEffect(() => {
         StateManager.setSelectedObjects = setSelectedObjects;
+
+        if (currentTool === Tool.Transitions) {
+            // Check or log transitions here
+            console.log(StateManager.transitions);
+        }
+        
         addEventListener('keydown', (ev: KeyboardEvent) => {
             // Ignore keyboard shortcuts if user is in a text box.
             // Solution from https://stackoverflow.com/a/4575309
