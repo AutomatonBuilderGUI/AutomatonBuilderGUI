@@ -11,6 +11,7 @@ import ModalWindow, { ClosableModalWindow } from './components/ModalWindow';
 import ConfigureAutomatonWindow from './components/ConfigureAutomatonWindow';
 import { BsGearFill, BsMoonFill, BsCheck2Circle } from 'react-icons/bs';
 import TestStringWindow from './components/TestStringWindow';
+import InformationBox, { InformationBoxType } from './components/InformationBox';
 
 function App() {
     const [currentTool, setCurrentTool] = useState(Tool.States);
@@ -83,6 +84,36 @@ function App() {
             startNode={startNode}
             setStartNode={setStartNode}
         />
+
+        {/* Some example error message boxes */}
+        <InformationBox infoBoxType={InformationBoxType.Error}>
+            State "q0" has multiple transitions for token "a"
+        </InformationBox>
+
+        <InformationBox infoBoxType={InformationBoxType.Error}>
+            State "q0" has no transition for token "b"
+        </InformationBox>
+
+        <InformationBox infoBoxType={InformationBoxType.Error}>
+            Transitions on empty string (ε) not allowed in DFA
+        </InformationBox>
+
+        <InformationBox infoBoxType={InformationBoxType.Error}>
+            Alphabet needs at least one token
+        </InformationBox>
+
+        <InformationBox infoBoxType={InformationBoxType.Error}>
+            Token "c" is repeated in alphabet
+        </InformationBox>
+
+        <InformationBox infoBoxType={InformationBoxType.Warning}>
+            State "q3" is inaccessible
+        </InformationBox>
+
+        <InformationBox infoBoxType={InformationBoxType.Warning}>
+            Accept state "q4" is inaccessible; automaton will always reject
+        </InformationBox>
+        
         <div className="flex flex-col items-center mt-4">
             <button
                 className="rounded-full p-2 m-1 mx-2 block bg-amber-500 text-white text-center"
