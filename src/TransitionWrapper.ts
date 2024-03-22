@@ -43,23 +43,34 @@ export default class TransitionWrapper extends SelectableObject {
         this._destNode = destNode;
         this._tokens = new Set(tokens) ?? new Set<TokenWrapper>();
         this._isEpsilonTransition = isEpsilonTransition ?? false;
-
-        const existingTransitions = StateManager.transitions.filter(t => 
+        
+        const existingTransition = StateManager.transitions.find(t =>
             (t.sourceNode.id === sourceNode.id && t.destNode.id === destNode.id) ||
             (t.sourceNode.id === destNode.id && t.destNode.id === sourceNode.id)
         );
-
-        //this.priority = existingTransitions.length === 0 ? 'first' : 'second';
-        if(existingTransitions.length === 0){
+        
+        if (existingTransition) {
+            //StateManager.deselectAllObjects();
+            StateManager.selectObject(existingTransition);
+            //StateManager.endTentativeTransition();
+            //this.deleteKonvaObjects();
+            return;
+        }
+        
+        const existingTransitions = StateManager.transitions.find(t =>
+            (t.sourceNode.id === sourceNode.id && t.destNode.id === destNode.id)
+        );
+        
+        if (!existingTransitions) {
             this.priority = 'straight';
         } else {
-            existingTransitions[0].priority = 'curve';
+            existingTransitions.priority = 'curve';
             this.priority = 'curve';
-            existingTransitions[0].updatePoints();
+            existingTransitions.updatePoints();
         }
-
+        
         this.konvaGroup = new Konva.Group();
-
+        
         this.arrowObject = new Konva.Arrow({
             x: 0,
             y: 0,
@@ -98,6 +109,7 @@ export default class TransitionWrapper extends SelectableObject {
         this.konvaGroup.on('click', (ev) => this.onClick.call(this, ev));
         this._sourceNode.nodeGroup.on('move.transition', (ev) => this.updatePoints.call(this));
         this._destNode.nodeGroup.on('move.transition', (ev) => this.updatePoints.call(this));
+        this.konvaGroup.on('click', (ev) => this.onClick.call(this, ev));
     }
 
     private resetLabel() {
@@ -148,9 +160,9 @@ export default class TransitionWrapper extends SelectableObject {
             srcPos.x - NodeWrapper.NodeRadius * Math.cos(ANGLE) - TransitionWrapper.ExtraTransitionArrowPadding * Math.cos(ANGLE),
             srcPos.y - NodeWrapper.NodeRadius * Math.sin(ANGLE) - TransitionWrapper.ExtraTransitionArrowPadding * Math.sin(ANGLE)
         ];
-    
         this.updateArrow(pointsArray, 0);
-        this.updateLabelPosition(centerPtX, centerPtY - 20);
+        this.labelObject.position({ x: centerPtX, y: centerPtY-20});
+        this.labelCenterDebugObject.position({ x: centerPtX, y: centerPtY});
     }
     
     handleCurvePriority(srcPos: { x: number, y: number }, dstPos: { x: number, y: number }) {
@@ -180,7 +192,7 @@ export default class TransitionWrapper extends SelectableObject {
         const unitVector = this.calculateUnitVectorTowardsSrc(srcPos, dstPos);
         const xAvg = ((srcPos.x + unitVector.x) + (dstPos.x - unitVector.x)) / 2;
         const yAvg = ((srcPos.y + unitVector.y) + (dstPos.y - unitVector.y)) / 2;
-    
+        const midPoint = { x: (srcPos.x + dstPos.x) / 2, y: (srcPos.y + dstPos.y) / 2 };
         this.updateArrow([srcPos.x, srcPos.y, dstPos.x - unitVector.x, dstPos.y - unitVector.y], 0);
         this.updateLabelPosition(xAvg, yAvg);
         this.updateLabelCenterDebugPosition(xAvg, yAvg);

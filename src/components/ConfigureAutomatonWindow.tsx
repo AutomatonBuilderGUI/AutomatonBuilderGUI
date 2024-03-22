@@ -21,7 +21,7 @@ function ListItem_TokenEditor(props: React.PropsWithChildren<ListItem_TokenEdito
         <CoreListItem>
             <div className="flex flex-row">
                 <div className="flex-1 grow float-left">
-                    <input className="focus:outline-none bg-transparent" type="text" placeholder="Token symbol" value={tokenSymbol} onChange={e => setTokenSymbol(e.target.value)}></input>
+                    <input className="focus:outline-none bg-transparent" type="text" minLength={1} maxLength={1} placeholder="Token symbol" value={tokenSymbol} onChange={e => setTokenSymbol(e.target.value)}></input>
                 </div>
                 <button className="flex-0 float-right px-2 block text-center text-red-500 align-middle" onClick={() => props.removeFunc(tw)}>
                     <BsXCircleFill />

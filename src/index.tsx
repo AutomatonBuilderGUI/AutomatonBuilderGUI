@@ -17,6 +17,7 @@ function App() {
     const [currentTool, setCurrentTool] = useState(Tool.States);
     const [selectedObjects, setSelectedObjects] = useState(new Array<SelectableObject>());
     const [startNode, setStartNode] = useState(StateManager.startNode);
+    const [isLabelUnique, setIsLabelUnique] = useState(true);
 
     // Switch current tool when keys pressed
     useEffect(() => {
@@ -58,6 +59,15 @@ function App() {
     }, [startNode]);
 
 
+    const emptyStringToken = StateManager.alphabet.some(token => token.symbol.trim() === '');
+
+    useEffect(() => {
+        const unique = StateManager.areAllLabelsUnique();
+        setIsLabelUnique(unique);
+    }, [selectedObjects]);
+
+
+
     // Config window
     const [configWindowOpen, setConfigWindowOpen] = useState(false);
     const openConfigWindow = () => { setConfigWindowOpen(true); };
@@ -84,6 +94,17 @@ function App() {
             startNode={startNode}
             setStartNode={setStartNode}
         />
+        {!isLabelUnique && (
+            <InformationBox infoBoxType={InformationBoxType.Error}>
+                Duplicate state labels detected. Each state must have a unique label.
+            </InformationBox>
+        )}
+
+        {emptyStringToken && (
+            <InformationBox infoBoxType={InformationBoxType.Error}>
+                Invalid token: Empty string detected.
+            </InformationBox>
+        )}
 
         {/* Some example error message boxes */}
         <InformationBox infoBoxType={InformationBoxType.Error}>

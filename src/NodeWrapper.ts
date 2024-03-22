@@ -293,7 +293,7 @@ export default class NodeWrapper extends SelectableObject {
 
   public updateColorScheme() {
     this.nodeBackground.fill(StateManager.colorScheme.nodeFill);
-
+    
     
     this.nodeBackground.stroke(StateManager.colorScheme.nodeStrokeColor);
     this.nodeAcceptCircle.stroke(StateManager.colorScheme.nodeAcceptStrokeColor);
