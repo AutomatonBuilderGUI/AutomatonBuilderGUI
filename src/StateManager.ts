@@ -33,6 +33,7 @@ export default class StateManager {
     public static setSelectedObjects: React.Dispatch<React.SetStateAction<SelectableObject[]>> | null = null;
 
     private static _useDarkMode: boolean = false;
+    private static _snapToGridEnabled: boolean = false;
 
     public static get colorScheme() {
         if (this._useDarkMode) {
@@ -44,6 +45,14 @@ export default class StateManager {
     }
 
     private constructor() {
+    }
+
+    public static toggleSnapToGrid() {
+        StateManager._snapToGridEnabled = !StateManager._snapToGridEnabled;
+    }
+
+    public static isSnapToGridEnabled(): boolean {
+        return StateManager._snapToGridEnabled;
     }
 
     public static initialize() {
@@ -128,6 +137,20 @@ export default class StateManager {
         }
     }
 
+    // getter for the stage position
+    public static getStagePosition(): { x: number; y: number } {
+        return this._stage ? { x: this._stage.x(), y: this._stage.y() } : { x: 0, y: 0 };
+    }
+    
+    // getter for the scale of the stage so it can be used in other classes
+    public static getStageScale(): { scaleX: number; scaleY: number } {
+        if (this._stage) {
+            return { scaleX: this._stage.scaleX(), scaleY: this._stage.scaleY() };
+        }
+        // Default scale is 1 if the stage is not initialized
+        return { scaleX: 1, scaleY: 1 };
+    }
+    
     public static drawGrid() {
         if (!StateManager._gridLayer || !StateManager._stage) {
             console.error('Grid layer or stage is not initialized.');
@@ -177,9 +200,6 @@ export default class StateManager {
         StateManager._gridLayer.batchDraw();
     }
     
-    
-    
-
     public static get currentTool() {
         return StateManager._currentTool;
     }
@@ -205,6 +225,7 @@ export default class StateManager {
     private static onDoubleClick(evt: Konva.KonvaEventObject<MouseEvent>) {
         if (StateManager.currentTool == Tool.States) {
             StateManager.addStateAtDoubleClickPos(evt);
+            
         }
         else if (StateManager.currentTool == Tool.Transitions) {
             console.log('in transition tool mode, so don\'t do anything');
@@ -219,12 +240,21 @@ export default class StateManager {
         if (!pointerPosition) return;
     
         // Convert the pointer position to the stage's coordinate space
-        const scale = stage.scaleX();
+        const scale = stage.scaleX(); // Assuming uniform scaling for X and Y
         const stagePos = stage.position();
     
         // Adjusting for the stage's position and scale
-        const x = (pointerPosition.x - stagePos.x) / scale;
-        const y = (pointerPosition.y - stagePos.y) / scale;
+        let x = (pointerPosition.x - stagePos.x) / scale;
+        let y = (pointerPosition.y - stagePos.y) / scale;
+    
+        // Snap to grid if enabled
+        if (StateManager._snapToGridEnabled) {
+            const gridSpacing = 50; // Define your grid spacing value here
+    
+            // No need to normalize the coordinates here since they're already in "stage space"
+            x = Math.round(x / gridSpacing) * gridSpacing;
+            y = Math.round(y / gridSpacing) * gridSpacing;
+        }
     
         const newStateWrapper = new NodeWrapper(x, y);
         StateManager._nodeWrappers.push(newStateWrapper);
@@ -236,6 +266,7 @@ export default class StateManager {
     
         StateManager._nodeLayer?.draw();
     }
+    
     
 
     public static addTransition(transition: TransitionWrapper) {
@@ -261,7 +292,7 @@ export default class StateManager {
 
     }
 
-    private static updateStartNodePosition() {
+    public static updateStartNodePosition() {
         StateManager._startStateLine.absolutePosition(StateManager._startNode.nodeGroup.absolutePosition());
     }
 
@@ -318,8 +349,12 @@ export default class StateManager {
             StateManager._tentConnectionLine.points([0, 0, xDestRelativeToSrc - xUnitTowardsSrc, yDestRelativeToSrc - yUnitTowardsSrc]);
         }
     }
+
+    
     
     public static endTentativeTransition() {
+
+
         if (StateManager._tentativeTransitionSource !== null && StateManager.tentativeTransitionTarget !== null) {
             const newTransitionWrapper = new TransitionWrapper(StateManager._tentativeTransitionSource, StateManager._tentativeTransitionTarget);
             StateManager._transitionWrappers.push(newTransitionWrapper);

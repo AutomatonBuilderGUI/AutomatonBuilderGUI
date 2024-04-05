@@ -20,6 +20,7 @@ export default class TransitionWrapper extends SelectableObject {
     private _sourceNode: NodeWrapper;
     transitionId: string;
     isCurved: boolean;
+    isDelete: boolean;//boolean for delete transition
     priority: string;
     public get sourceNode() { return this._sourceNode; }
 
@@ -43,30 +44,30 @@ export default class TransitionWrapper extends SelectableObject {
         this._destNode = destNode;
         this._tokens = new Set(tokens) ?? new Set<TokenWrapper>();
         this._isEpsilonTransition = isEpsilonTransition ?? false;
+        this.isDelete = false;
         
-        const existingTransition = StateManager.transitions.find(t =>
-            (t.sourceNode.id === sourceNode.id && t.destNode.id === destNode.id) ||
+        const reverseExistingTransition = StateManager.transitions.find(t =>
             (t.sourceNode.id === destNode.id && t.destNode.id === sourceNode.id)
         );
-        
-        if (existingTransition) {
-            //StateManager.deselectAllObjects();
-            StateManager.selectObject(existingTransition);
-            //StateManager.endTentativeTransition();
-            //this.deleteKonvaObjects();
-            return;
-        }
-        
-        const existingTransitions = StateManager.transitions.find(t =>
+        const existingTransition = StateManager.transitions.find(t =>
             (t.sourceNode.id === sourceNode.id && t.destNode.id === destNode.id)
         );
-        
-        if (!existingTransitions) {
+        //check if transition is already created 
+        if(existingTransition)
+        {
+            StateManager.deselectAllObjects();
+            StateManager.selectObject(existingTransition);
+            this.isDelete =true;//mark transition to straightaway delete it
+        }        
+        if (!reverseExistingTransition) 
+        {
             this.priority = 'straight';
-        } else {
-            existingTransitions.priority = 'curve';
+        } 
+        else 
+        {
+            reverseExistingTransition.priority = 'curve';
             this.priority = 'curve';
-            existingTransitions.updatePoints();
+            reverseExistingTransition.updatePoints();
         }
         
         this.konvaGroup = new Konva.Group();
@@ -100,10 +101,14 @@ export default class TransitionWrapper extends SelectableObject {
             fill: StateManager.colorScheme.transitionLabelColor,
         });
 
+if (this.isDelete){
+
+}
+else{
         this.konvaGroup.add(this.arrowObject);
         this.konvaGroup.add(this.labelCenterDebugObject);
         this.konvaGroup.add(this.labelObject);
-
+}
         this.updatePoints();
 
         this.konvaGroup.on('click', (ev) => this.onClick.call(this, ev));
@@ -135,6 +140,10 @@ export default class TransitionWrapper extends SelectableObject {
                 this.handleCurvePriority(srcPos, dstPos);
             } else {
                 this.handleDefaultPriority(srcPos, dstPos);
+            }
+            if(this.isDelete)
+            {
+            this.deleteKonvaObjects;
             }
         }
     }
