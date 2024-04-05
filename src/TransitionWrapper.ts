@@ -7,7 +7,6 @@ import TokenWrapper from "./TokenWrapper";
 import { v4 as uuidv4 } from 'uuid';
 
 export default class TransitionWrapper extends SelectableObject {
-   
     public static readonly ExtraTransitionArrowPadding = 5;
 
     private static readonly SelectedArrowColor = 'red';
@@ -21,6 +20,7 @@ export default class TransitionWrapper extends SelectableObject {
     private _sourceNode: NodeWrapper;
     transitionId: string;
     isCurved: boolean;
+    isDelete: boolean;
     priority: string;
     public get sourceNode() { return this._sourceNode; }
 
@@ -44,23 +44,37 @@ export default class TransitionWrapper extends SelectableObject {
         this._destNode = destNode;
         this._tokens = new Set(tokens) ?? new Set<TokenWrapper>();
         this._isEpsilonTransition = isEpsilonTransition ?? false;
-
-        const existingTransitions = StateManager.transitions.filter(t => 
-            (t.sourceNode.id === sourceNode.id && t.destNode.id === destNode.id) ||
+        this.isDelete = false;
+        
+        const existingTransitions = StateManager.transitions.find(t =>
+        //    (t.sourceNode.id === sourceNode.id && t.destNode.id === destNode.id) ||
             (t.sourceNode.id === destNode.id && t.destNode.id === sourceNode.id)
         );
-
-        //this.priority = existingTransitions.length === 0 ? 'first' : 'second';
-        if(existingTransitions.length === 0){
-            this.priority = 'straight';
-        } else {
-            existingTransitions[0].priority = 'curve';
-            this.priority = 'curve';
-            existingTransitions[0].updatePoints();
+        const existingTransition = StateManager.transitions.find(t =>
+            (t.sourceNode.id === sourceNode.id && t.destNode.id === destNode.id)
+        );
+        if(existingTransition)
+        {
+            this.isDelete =true;
+            StateManager.deselectAllObjects();
+            StateManager.selectObject(existingTransition);
         }
+        
 
+        
+        if (!existingTransitions) 
+        {
+            this.priority = 'straight';
+        } 
+        else 
+        {
+            existingTransitions.priority = 'curve';
+            this.priority = 'curve';
+            existingTransitions.updatePoints();
+        }
+        
         this.konvaGroup = new Konva.Group();
-
+        
         this.arrowObject = new Konva.Arrow({
             x: 0,
             y: 0,
@@ -90,15 +104,20 @@ export default class TransitionWrapper extends SelectableObject {
             fill: StateManager.colorScheme.transitionLabelColor,
         });
 
+if (this.isDelete){
+
+}
+else{
         this.konvaGroup.add(this.arrowObject);
         this.konvaGroup.add(this.labelCenterDebugObject);
         this.konvaGroup.add(this.labelObject);
-
+}
         this.updatePoints();
 
         this.konvaGroup.on('click', (ev) => this.onClick.call(this, ev));
         this._sourceNode.nodeGroup.on('move.transition', (ev) => this.updatePoints.call(this));
         this._destNode.nodeGroup.on('move.transition', (ev) => this.updatePoints.call(this));
+        this.konvaGroup.on('click', (ev) => this.onClick.call(this, ev));
     }
 
     private resetLabel() {
@@ -125,6 +144,10 @@ export default class TransitionWrapper extends SelectableObject {
             } else {
                 this.handleDefaultPriority(srcPos, dstPos);
             }
+            if(this.isDelete)
+            {
+            this.deleteKonvaObjects;
+            }
         }
     }
     
@@ -149,9 +172,9 @@ export default class TransitionWrapper extends SelectableObject {
             srcPos.x - NodeWrapper.NodeRadius * Math.cos(ANGLE) - TransitionWrapper.ExtraTransitionArrowPadding * Math.cos(ANGLE),
             srcPos.y - NodeWrapper.NodeRadius * Math.sin(ANGLE) - TransitionWrapper.ExtraTransitionArrowPadding * Math.sin(ANGLE)
         ];
-    
         this.updateArrow(pointsArray, 0);
-        this.updateLabelPosition(centerPtX, centerPtY - 20);
+        this.labelObject.position({ x: centerPtX, y: centerPtY-20});
+        this.labelCenterDebugObject.position({ x: centerPtX, y: centerPtY});
     }
     
     handleCurvePriority(srcPos: { x: number, y: number }, dstPos: { x: number, y: number }) {
@@ -181,7 +204,7 @@ export default class TransitionWrapper extends SelectableObject {
         const unitVector = this.calculateUnitVectorTowardsSrc(srcPos, dstPos);
         const xAvg = ((srcPos.x + unitVector.x) + (dstPos.x - unitVector.x)) / 2;
         const yAvg = ((srcPos.y + unitVector.y) + (dstPos.y - unitVector.y)) / 2;
-    
+        const midPoint = { x: (srcPos.x + dstPos.x) / 2, y: (srcPos.y + dstPos.y) / 2 };
         this.updateArrow([srcPos.x, srcPos.y, dstPos.x - unitVector.x, dstPos.y - unitVector.y], 0);
         this.updateLabelPosition(xAvg, yAvg);
         this.updateLabelCenterDebugPosition(xAvg, yAvg);
