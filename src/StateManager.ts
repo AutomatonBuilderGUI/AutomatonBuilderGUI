@@ -1929,6 +1929,10 @@ export default class StateManager {
    * @param json The deserialized JSON object to load.
    */
   public static loadAutomaton(json: SerializableAutomaton) {
+  	if (!this.isValidAutomaton(json)) {
+        return;
+    }
+
     const { states, alphabet, transitions, startState, acceptStates } = json;
 
     StateManager.clearMachine();
@@ -1990,6 +1994,84 @@ export default class StateManager {
 
     this._stage.draw();
   }
+
+  private static isValidAutomaton(json: SerializableAutomaton): boolean {
+  	// for now just console log, not sure how to desiplay window
+  	if (!json ||
+        !json.states ||
+        !json.alphabet ||
+        !json.transitions ||
+        !json.startState ||
+        !json.acceptStates) {
+      console.error("Missing required fields in automata");
+      return false;
+    }
+
+    if (!json.states.every((state) => this.isValidState(state))) {
+    	console.error("states not properly formatted in automata");
+    	return false;
+    }
+
+    if (!json.alphabet.every((token) => this.isValidToken(token))) {
+    	console.error("alphabet not properly formatted in automata");
+    	return false;
+    }
+
+
+		if (!json.transitions.every((transition) => this.isValidTransition(transition, json))) {
+        console.error("Invalid 'transitions' format.");
+        return false;
+    }
+
+    if (json.startState === undefined) {
+    		console.log(json.startState);
+        console.error("Invalid 'startState' format.");
+        return false;
+    }
+
+    if (json.acceptStates.every((state) => state === undefined)) {
+        console.error("Invalid 'acceptStates' format.");
+        return false;
+    }
+
+    return true;
+  }
+
+  private static isValidState(state: SerializableState): boolean {  	
+  	return (  	
+  	state.id !== undefined &&
+  	state.x !== undefined &&
+    state.y !== undefined &&
+    state.label !== undefined );
+  }
+
+  private static isValidToken(token: SerializableToken): boolean {
+    return token.id !== undefined && token.symbol !== undefined;
+	}
+
+	private static isValidTransition(transition: SerializableTransition, json: SerializableAutomaton): boolean {
+  	console.log(transition);
+
+  	if (transition.id === undefined ||
+  	  transition.source === undefined ||
+  	  transition.dest === undefined ||
+  	  transition.isEpsilonTransition === undefined ||
+  	  transition.tokens === undefined ||
+  	  transition.tokens.every((tok) => tok === undefined)
+  	) {
+  	  return false;
+  	}
+	
+
+  	const stateIds = new Set(json.states?.map((state: any) => state.id) || []);
+  	const tokenIds = new Set(json.alphabet?.map((token: any) => token.id) || []);
+	
+  	return (
+  	  stateIds.has(transition.source) &&
+  	  stateIds.has(transition.dest) &&
+  	  transition.tokens.every((tok) => tokenIds.has(tok))
+  	);
+	}
 
   /** Sets whether or not dark mode is enabled. */
   public static set useDarkMode(val: boolean) {
