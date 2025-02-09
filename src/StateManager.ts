@@ -1915,12 +1915,15 @@ export default class StateManager {
 
     const fileText = file.text().then(
       (text) => {
-        StateManager.loadAutomaton(JSON.parse(text));
+        return JSON.parse(text);
       },
       (reject_reason) => {
         console.error("could not get file text, reason was", reject_reason);
+        return null;
       },
     );
+
+    return fileText;
   }
 
   /**
@@ -1929,10 +1932,6 @@ export default class StateManager {
    * @param json The deserialized JSON object to load.
    */
   public static loadAutomaton(json: SerializableAutomaton) {
-    if (!this.isValidAutomaton(json)) {
-      return;
-    }
-
     const { states, alphabet, transitions, startState, acceptStates } = json;
 
     StateManager.clearMachine();
@@ -1995,7 +1994,9 @@ export default class StateManager {
     this._stage.draw();
   }
 
-  private static isValidAutomaton(json: SerializableAutomaton): boolean {
+  public static isValidAutomaton(
+    json: SerializableAutomaton,
+  ): [boolean, string] {
     // for now just console log, not sure how to desiplay window
     if (
       !json ||
@@ -2005,18 +2006,18 @@ export default class StateManager {
       !json.startState ||
       !json.acceptStates
     ) {
-      console.error("Missing required fields in automata");
-      return false;
+      console.error("Missing required fields");
+      return [false, "Missing required fields"];
     }
 
     if (!json.states.every((state) => this.isValidState(state))) {
-      console.error("states not properly formatted in automata");
-      return false;
+      console.error("states not properly formatted");
+      return [false, "states not properly formatted"];
     }
 
     if (!json.alphabet.every((token) => this.isValidToken(token))) {
-      console.error("alphabet not properly formatted in automata");
-      return false;
+      console.error("alphabet not properly formatted");
+      return [false, "alphabet not properly formatted"];
     }
 
     if (
@@ -2025,21 +2026,21 @@ export default class StateManager {
       )
     ) {
       console.error("Invalid 'transitions' format.");
-      return false;
+      return [false, "Invalid 'transitions' format."];
     }
 
     if (json.startState === undefined) {
       console.log(json.startState);
       console.error("Invalid 'startState' format.");
-      return false;
+      return [false, "Invalid 'startState' format."];
     }
 
     if (json.acceptStates.every((state) => state === undefined)) {
       console.error("Invalid 'acceptStates' format.");
-      return false;
+      return [false, "Invalid 'acceptStates' format."];
     }
 
-    return true;
+    return [true, ""];
   }
 
   private static isValidState(state: SerializableState): boolean {

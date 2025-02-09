@@ -3,6 +3,7 @@ import ToolButton from "./ToolButton";
 import StateManager from "../StateManager";
 import { useRef } from "react";
 import { useState } from "react";
+import { ChangeEvent } from "react";
 import {
   BsCursor,
   BsCursorFill,
@@ -21,6 +22,7 @@ import {
 import { TbZoomReset } from "react-icons/tb";
 import { GrGrid } from "react-icons/gr";
 import ConfirmationDialog from "./ConfirmationDialog";
+import ErrorDialogBox from "./ErrorDialogBox";
 import { FaRegImage } from "react-icons/fa6";
 import { BiFileBlank, BiReset } from "react-icons/bi";
 import { MdOutlineFitScreen } from "react-icons/md";
@@ -118,6 +120,31 @@ export default function Toolbox(props: React.PropsWithChildren<ToolboxProps>) {
     setIsUnsavedDialogVisible(false);
   };
 
+  // handler for JSON error messages
+  const [isErrorVisible, setIsErrorVisible] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
+
+  const showError = (message: string) => {
+    setErrorMessage(message);
+    setIsErrorVisible(true);
+  };
+
+  const handleErrorClose = () => {
+    setIsErrorVisible(false);
+  };
+
+  const handleFileUpload = (e: ChangeEvent<HTMLInputElement>) => {
+    StateManager.uploadJSON(e).then((parsedData) => {
+      const automatonCheck = StateManager.isValidAutomaton(parsedData);
+      if (automatonCheck[0] == false) {
+        showError(automatonCheck[1]);
+        return;
+      }
+
+      StateManager.loadAutomaton(parsedData);
+    });
+  };
+
   return (
     <>
       <div className="flex flex-col text-xl">
@@ -182,7 +209,7 @@ export default function Toolbox(props: React.PropsWithChildren<ToolboxProps>) {
           id="file-uploader"
           ref={fileInputRef}
           style={{ display: "none" }}
-          onChange={StateManager.uploadJSON}
+          onChange={handleFileUpload}
         />
         <ActionButton
           onClick={handleUnsavedChangesClick}
@@ -273,6 +300,10 @@ export default function Toolbox(props: React.PropsWithChildren<ToolboxProps>) {
           onCancel={handleUnsavedCancel}
           message="There are unsaved changes to the current file, do you still want to load a new file?"
         />
+      )}
+      {/* window for error messages on JSON load */}
+      {isErrorVisible && (
+        <ErrorDialogBox onClose={handleErrorClose} message={errorMessage} />
       )}
     </>
   );
