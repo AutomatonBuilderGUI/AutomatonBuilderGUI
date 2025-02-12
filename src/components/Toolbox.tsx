@@ -134,15 +134,21 @@ export default function Toolbox(props: React.PropsWithChildren<ToolboxProps>) {
   };
 
   const handleFileUpload = (e: ChangeEvent<HTMLInputElement>) => {
-    StateManager.uploadJSON(e).then((parsedData) => {
-      const automatonCheck = StateManager.isValidAutomaton(parsedData);
-      if (automatonCheck[0] == false) {
-        showError(automatonCheck[1]);
-        return;
-      }
+    StateManager.uploadJSON(e)
+      .then((parsedData) => {
+        const automatonCheck = StateManager.isValidAutomaton(parsedData);
+        if (automatonCheck[0] == false) {
+          showError(automatonCheck[1]);
+          return;
+        }
 
-      StateManager.loadAutomaton(parsedData);
-    });
+        StateManager.loadAutomaton(parsedData);
+      })
+      .catch((response) => {
+        showError(
+          "Input file must contain valid JSON. Download a sample Automaton for an example.",
+        );
+      });
   };
 
   return (
