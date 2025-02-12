@@ -10,7 +10,12 @@ export default function TestStringWindow() {
   const [isError, setIsError] = useState(false);
 
   useEffect(() => {
-    if (result === "Rejected" || result === "Accepted") setResult("");
+    if (
+      result === "Rejected" ||
+      result === "Accepted" ||
+      result === "Invalid DFA"
+    )
+      setResult("");
   }, [JSON.stringify(StateManager.dfa)]);
 
   const errorMessages = [
