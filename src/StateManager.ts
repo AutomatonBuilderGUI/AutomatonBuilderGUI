@@ -2029,13 +2029,15 @@ export default class StateManager {
       return [false, "This automaton's transitions could not be read."];
     }
 
-    if (json.startState === undefined) {
-      console.log(json.startState);
+    if (
+      typeof json.startState !== "string" ||
+      !json.states.some((state) => state.id === json.startState)
+    ) {
       console.error("Invalid 'startState' format.");
       return [false, "This automaton's start state could not be read."];
     }
 
-    if (json.acceptStates === undefined) {
+    if (!this.isArrayOfStrings(json.acceptStates)) {
       console.error("Invalid 'acceptStates' format.");
       return [false, "This automaton's accept states could not be read."];
     }
@@ -2045,29 +2047,27 @@ export default class StateManager {
 
   private static isValidState(state: SerializableState): boolean {
     return (
-      state.id !== undefined &&
-      state.x !== undefined &&
-      state.y !== undefined &&
-      state.label !== undefined
+      typeof state.id === "string" &&
+      typeof state.x === "number" &&
+      typeof state.y === "number" &&
+      typeof state.label === "string"
     );
   }
 
   private static isValidToken(token: SerializableToken): boolean {
-    return token.id !== undefined && token.symbol !== undefined;
+    return typeof token.id === "string" && typeof token.symbol === "string";
   }
 
   private static isValidTransition(
     transition: SerializableTransition,
     json: SerializableAutomaton,
   ): boolean {
-    console.log(transition);
-
     if (
-      transition.id === undefined ||
-      transition.source === undefined ||
-      transition.dest === undefined ||
-      transition.isEpsilonTransition === undefined ||
-      transition.tokens === undefined
+      typeof transition.id !== "string" ||
+      typeof transition.source !== "string" ||
+      typeof transition.dest !== "string" ||
+      typeof transition.isEpsilonTransition !== "boolean" ||
+      !this.isArrayOfStrings(transition.tokens)
     ) {
       return false;
     }
@@ -2081,6 +2081,12 @@ export default class StateManager {
       stateIds.has(transition.source) &&
       stateIds.has(transition.dest) &&
       transition.tokens.every((tok) => tokenIds.has(tok))
+    );
+  }
+
+  private static isArrayOfStrings(value: any): boolean {
+    return (
+      Array.isArray(value) && value.every((item) => typeof item === "string")
     );
   }
 
