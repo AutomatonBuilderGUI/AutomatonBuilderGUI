@@ -2007,17 +2007,17 @@ export default class StateManager {
       !json.acceptStates
     ) {
       console.error("Missing required fields");
-      return [false, "Missing required fields"];
+      return [false, "This automaton could not be read."];
     }
 
     if (!json.states.every((state) => this.isValidState(state))) {
       console.error("states not properly formatted");
-      return [false, "states not properly formatted"];
+      return [false, "This automaton's states could not be read."];
     }
 
     if (!json.alphabet.every((token) => this.isValidToken(token))) {
       console.error("alphabet not properly formatted");
-      return [false, "alphabet not properly formatted"];
+      return [false, "This automaton's alphabet could not be read."];
     }
 
     if (
@@ -2026,18 +2026,18 @@ export default class StateManager {
       )
     ) {
       console.error("Invalid 'transitions' format.");
-      return [false, "Invalid 'transitions' format."];
+      return [false, "This automaton's transitions could not be read."];
     }
 
     if (json.startState === undefined) {
       console.log(json.startState);
       console.error("Invalid 'startState' format.");
-      return [false, "Invalid 'startState' format."];
+      return [false, "This automaton's start state could not be read."];
     }
 
     if (json.acceptStates === undefined) {
       console.error("Invalid 'acceptStates' format.");
-      return [false, "Invalid 'acceptStates' format."];
+      return [false, "This automaton's accept states could not be read."];
     }
 
     return [true, ""];

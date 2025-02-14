@@ -146,7 +146,7 @@ export default function Toolbox(props: React.PropsWithChildren<ToolboxProps>) {
       })
       .catch((response) => {
         showError(
-          "Input file must contain valid JSON. Download a sample Automaton for an example.",
+          "The file does not contain valid JSON.",
         );
       });
   };
