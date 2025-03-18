@@ -1224,6 +1224,38 @@ export default class StateManager {
   }
 
   /**
+   * Pushes an action to the action stack that adds an array of new tokens
+   * with symbols to the automaton.
+   */
+  public static addTokensWithSymbols(newSymbols: string[]) {
+    // TODO: logic for removing tokens needs to be modified - right now
+    // it looks like it does some checks that we may no longer want, now
+    // that we have undo/redo!
+    const tokensData: addTokensWithSymbolsActionData[] = [];
+
+    for (let i = 0; i < newSymbols.length; i++) {
+      const newSymbol = newSymbols[i];
+      // Check if the symbol is empty
+      if (newSymbol == "") {
+        continue;
+      }
+
+      // Check if the symbol already exists
+      if (StateManager._alphabet.some(token => token.symbol === newSymbol)) {
+        continue;
+      }
+      const newToken = new TokenWrapper();
+      const oldSymbol = newToken.symbol;
+      
+      tokensData.push({
+        token: newToken,
+        oldSymbol: oldSymbol,
+        newSymbol: newSymbol
+      });
+    }
+  }
+  
+  /**
    * Pushes an action to the action stack that removes the given token from
    * the automaton.
    * @param token The token to remove.
@@ -2407,6 +2439,18 @@ class SetTransitionAcceptsTokenData extends ActionData {
 class AddTokenActionData extends ActionData {
   /** The token created in this action. */
   public token: TokenWrapper;
+}
+
+/** Holds the data associated with an "add tokens with symbols to automaton" action. */
+class addTokensWithSymbolsActionData extends ActionData {
+  /** The token created in this action. */
+  public token: TokenWrapper;
+
+  /** The symbol for this token before this action. */
+  public oldSymbol: string;
+
+  /** The symbol for this token after this action. */
+  public newSymbol: string;
 }
 
 /** Holds the data associated with a "remove token from automaton" action. */
