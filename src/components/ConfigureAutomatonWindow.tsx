@@ -76,14 +76,16 @@ function AlphabetList() {
   const [inputValue, setInputValue] = useState("");
 
   function addTokenToAlphabet() {
-    const newSymbols = new Set(inputValue.split(',').map(token => token.trim()));
+    const newSymbols = new Set(
+      inputValue.split(",").map((token) => token.trim()),
+    );
     const newSymbolsArray = Array.from(newSymbols);
     StateManager.addTokensWithSymbols(newSymbolsArray);
     setInputValue("");
   }
 
   const handleKeyUp = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter') {
+    if (e.key === "Enter") {
       addTokenToAlphabet();
     }
   };

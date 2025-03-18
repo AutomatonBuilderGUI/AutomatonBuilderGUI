@@ -1241,20 +1241,20 @@ export default class StateManager {
       }
 
       // Check if the symbol already exists
-      if (StateManager._alphabet.some(token => token.symbol === newSymbol)) {
+      if (StateManager._alphabet.some((token) => token.symbol === newSymbol)) {
         continue;
       }
       const newToken = new TokenWrapper();
       const oldSymbol = newToken.symbol;
-      
+
       tokensData.push({
         token: newToken,
         oldSymbol: oldSymbol,
-        newSymbol: newSymbol
+        newSymbol: newSymbol,
       });
     }
   }
-  
+
   /**
    * Pushes an action to the action stack that removes the given token from
    * the automaton.
