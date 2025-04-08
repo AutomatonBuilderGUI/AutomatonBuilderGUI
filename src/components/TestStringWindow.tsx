@@ -47,7 +47,7 @@ export default function TestStringWindow() {
     <div>
       <div className="flex items-center bg-white p-3 rounded-lg shadow-sm border border-gray-300">
         <input
-          className="focus:outline-none bg-transparent flex-grow border-0 py-2"
+          className="focus:outline-none bg-transparent flex-grow border-0 py-2 text-black"
           type="text"
           placeholder="Enter string to test"
           value={testString}

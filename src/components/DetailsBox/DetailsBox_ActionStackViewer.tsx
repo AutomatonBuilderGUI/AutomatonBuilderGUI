@@ -23,7 +23,7 @@ interface ActionRowItemProps {
 function ActionRowItem(props: ActionRowItemProps) {
   return (
     <div
-      className={`border-t-2 border-zinc-400 ${props.greyedOut ? "text-slate-500" : ""}`}
+      className={`border-t-2 border-zinc-400 ${props.greyedOut ? "text-zinc-400" : ""}`}
     >
       {props.displayString}
     </div>
