@@ -47,10 +47,7 @@ export default function DetailsBox_StateSelection(
 
   let updateNodeIsAccept = (isAccept: boolean) => {
     setIsAccept(isAccept);
-    nodeWrappers.forEach((node) => {
-      if (node.isAcceptNode !== isAccept)
-        StateManager.setNodeIsAccept(node, isAccept);
-    });
+    StateManager.setNodesIsAccept(nodeWrappers, isAccept);
   };
 
   const [_, currentStackLocation] = useActionStack();

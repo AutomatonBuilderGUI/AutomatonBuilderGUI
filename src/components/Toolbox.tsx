@@ -18,6 +18,7 @@ import {
   BsFillArrowLeftCircleFill,
   BsFillArrowRightCircleFill,
   BsCake,
+  BsBug,
 } from "react-icons/bs";
 import { TbZoomReset } from "react-icons/tb";
 import { GrGrid } from "react-icons/gr";
@@ -78,6 +79,11 @@ export default function Toolbox(props: React.PropsWithChildren<ToolboxProps>) {
     StateManager.toggleSnapToGrid();
     setIsSnapActive(!isSnapActive); // Toggle the local UI state
   };
+  const [isDebugActive, setIsDebugActive] = useState(StateManager.debugEnabled);
+  const handleToggleDebug = () => {
+    StateManager.setDebug();
+    setIsDebugActive(!isDebugActive);
+  };
 
   // Function to trigger file input click event
   const handleLoadButtonClick = () => {
@@ -88,7 +94,9 @@ export default function Toolbox(props: React.PropsWithChildren<ToolboxProps>) {
   const [isClearDialogVisible, setIsClearDialogVisible] = useState(false);
 
   const handleClearMachineClick = () => {
-    setIsClearDialogVisible(true);
+    if (!isDebugActive) {
+      setIsClearDialogVisible(true);
+    }
   };
 
   const handleClearConfirm = () => {
@@ -104,10 +112,12 @@ export default function Toolbox(props: React.PropsWithChildren<ToolboxProps>) {
 
   const handleUnsavedChangesClick = () => {
     // If its still clean then dont open the window to ask.
-    if (StateManager.cleanState()) {
-      handleLoadButtonClick();
-    } else {
-      setIsUnsavedDialogVisible(true);
+    if (!isDebugActive) {
+      if (StateManager.cleanState()) {
+        handleLoadButtonClick();
+      } else {
+        setIsUnsavedDialogVisible(true);
+      }
     }
   };
 
@@ -173,7 +183,9 @@ export default function Toolbox(props: React.PropsWithChildren<ToolboxProps>) {
           title="Add States [A]"
         >
           <div className="flex flex-row items-center place-content-center">
-            {props.currentTool === Tool.States ? (
+            {isDebugActive ? (
+              <BsPlusCircleFill style={{ color: "red" }} />
+            ) : props.currentTool === Tool.States ? (
               <BsPlusCircleFill />
             ) : (
               <BsPlusCircle />
@@ -187,7 +199,9 @@ export default function Toolbox(props: React.PropsWithChildren<ToolboxProps>) {
           title="Add Transitions [T]"
         >
           <div className="flex flex-row items-center place-content-center">
-            {props.currentTool === Tool.Transitions ? (
+            {isDebugActive ? (
+              <BsNodePlusFill style={{ color: "red" }} />
+            ) : props.currentTool === Tool.Transitions ? (
               <BsNodePlusFill />
             ) : (
               <BsNodePlus />
@@ -195,13 +209,22 @@ export default function Toolbox(props: React.PropsWithChildren<ToolboxProps>) {
           </div>
         </ToolButton>
         <div className="grow"></div>
+
         {/* Enable Snap to Grid Button */}
         <ActionButton
           onClick={handleToggleSnap}
           icon={<GrGrid />}
           title={isSnapActive ? "Disable Snap to Grid" : "Enable Snap to Grid"}
           bgColor={isSnapActive ? "bg-fuchsia-800" : "bg-fuchsia-500"}
+        />
+
+        <ActionButton
+          onClick={handleToggleDebug}
+          icon={<BsBug />}
+          title={isDebugActive ? "Disable debug" : "Enable debug"}
+          bgColor={isDebugActive ? "bg-red-800" : "bg-blue-800"}
         ></ActionButton>
+
         <ActionButton
           onClick={StateManager.downloadJSON}
           icon={<BsDownload />}
@@ -257,29 +280,36 @@ export default function Toolbox(props: React.PropsWithChildren<ToolboxProps>) {
           bgColor="bg-blue-500"
         ></ActionButton>
         {/* Clear Stage No Save Button */}
+
         <div className="flex flex-col items-center mt-4"></div>
-        <ActionButton
-          onClick={handleClearMachineClick}
-          icon={<BiFileBlank />}
-          title="New Automaton"
-          bgColor="bg-black"
-          margin="m-10"
-        ></ActionButton>
+        {!isDebugActive && (
+          <ActionButton
+            onClick={handleClearMachineClick}
+            icon={<BiFileBlank />}
+            title="New Automaton"
+            bgColor="bg-black"
+            margin="m-10"
+          ></ActionButton>
+        )}
 
         {/* Undo Button */}
-        <ActionButton
-          onClick={StateManager.undoState}
-          icon={<BsFillArrowLeftCircleFill />}
-          title="Undo most recent action"
-          bgColor="bg-blue-500"
-        ></ActionButton>
+        {!isDebugActive && (
+          <ActionButton
+            onClick={StateManager.undoState}
+            icon={<BsFillArrowLeftCircleFill />}
+            title="Undo most recent action"
+            bgColor="bg-blue-500"
+          ></ActionButton>
+        )}
         {/* Redo Button */}
-        <ActionButton
-          onClick={StateManager.redoState}
-          icon={<BsFillArrowRightCircleFill />}
-          title="Redo most recent action"
-          bgColor="bg-blue-500"
-        ></ActionButton>
+        {!isDebugActive && (
+          <ActionButton
+            onClick={StateManager.redoState}
+            icon={<BsFillArrowRightCircleFill />}
+            title="Redo most recent action"
+            bgColor="bg-blue-500"
+          ></ActionButton>
+        )}
         {/* Export Button */}
         <ActionButton
           onClick={StateManager.exportAutomatonToImage}
