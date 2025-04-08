@@ -59,6 +59,7 @@ export default function TestStringWindow() {
           }}
         />
         <button
+          id="testMachineButton"
           className="ml-2 px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 focus:outline-none focus:bg-green-700"
           onClick={handleTestString}
         >

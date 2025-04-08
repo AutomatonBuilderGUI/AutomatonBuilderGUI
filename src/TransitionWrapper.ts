@@ -12,7 +12,7 @@ import { v4 as uuidv4 } from "uuid";
  */
 export default class TransitionWrapper extends SelectableObject {
   public static readonly ExtraTransitionArrowPadding = 5;
-  public static readonly LoopTransitionDist = 30;
+  public static readonly LoopTransitionDist = 20;
 
   private arrowObject: Konva.Arrow;
   private labelObject: Konva.Text;
@@ -188,7 +188,7 @@ export default class TransitionWrapper extends SelectableObject {
       centerPtY,
     );
 
-    this.updateArrow(pointsArray, 0);
+    this.updateArrow(pointsArray, 0.5);
     this.updateLabelPosition(centerPtX, centerPtY - 20);
     this.updateLabelCenterDebugPosition(centerPtX, centerPtY);
   }
@@ -206,7 +206,7 @@ export default class TransitionWrapper extends SelectableObject {
     centerPtX: number,
     centerPtY: number,
   ): number[] {
-    const ANGLE = 60.0 * (Math.PI / 180.0);
+    const ANGLE = 75.0 * (Math.PI / 180.0);
     const DIST = TransitionWrapper.LoopTransitionDist;
 
     const pointsArray = [
