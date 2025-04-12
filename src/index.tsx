@@ -76,7 +76,7 @@ function App() {
       .then((parsedData) => {
         let i = 0;
         let arr = [];
-        for (let test of parsedData.Tests) {
+        for (let test of parsedData.tests) {
           if (test.string === undefined || test.expecting === undefined)
             console.log("Error: Missing a 'string' or 'expecting' parameter.");
           else
