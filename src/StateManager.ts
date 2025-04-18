@@ -1288,6 +1288,59 @@ export default class StateManager {
   }
 
   /**
+   * Pushes an action to the action stack that adds an array of new tokens
+   * with symbols to the automaton.
+   */
+  public static addTokensWithSymbols(newSymbols: string[]) {
+    // Clear TODO: logic for removing tokens is now handled with undo/redo actions
+    const tokensData: addTokensWithSymbolsActionData[] = [];
+
+    for (let i = 0; i < newSymbols.length; i++) {
+      const newSymbol = newSymbols[i];
+
+      // Check if the symbol is empty
+      if (newSymbol === "") {
+        continue;
+      }
+
+      // Check if the symbol already exists
+      if (StateManager._alphabet.some((token) => token.symbol === newSymbol)) {
+        continue;
+      }
+
+      // Create a new token and set its symbol
+      const newToken = new TokenWrapper();
+      newToken.symbol = newSymbol;
+
+      // Define forward and backward actions for undo/redo
+      let addTokenForward = (data: addTokensWithSymbolsActionData) => {
+        StateManager._alphabet.push(data.token);
+      };
+
+      let addTokenBackward = (data: addTokensWithSymbolsActionData) => {
+        StateManager._alphabet = StateManager._alphabet.filter(
+          (i) => i !== data.token,
+        );
+      };
+
+      // Create an action for adding the token
+      let addTokenAction = new Action(
+        "addToken",
+        `Add Token "${newSymbol}"`,
+        addTokenForward,
+        addTokenBackward,
+        { token: newToken, oldSymbol: "", newSymbol: newSymbol },
+      );
+
+      // Push the action to the undo/redo manager
+      UndoRedoManager.pushAction(addTokenAction);
+
+      // Add the token data to the tokensData array
+      tokensData.push({ token: newToken, oldSymbol: "", newSymbol: newSymbol });
+    }
+  }
+
+  /**
    * Pushes an action to the action stack that removes the given token from
    * the automaton.
    * @param token The token to remove.
@@ -2562,6 +2615,18 @@ class SetTransitionAcceptsTokenData extends ActionData {
 class AddTokenActionData extends ActionData {
   /** The token created in this action. */
   public token: TokenWrapper;
+}
+
+/** Holds the data associated with an "add tokens with symbols to automaton" action. */
+class addTokensWithSymbolsActionData extends ActionData {
+  /** The token created in this action. */
+  public token: TokenWrapper;
+
+  /** The symbol for this token before this action. */
+  public oldSymbol: string;
+
+  /** The symbol for this token after this action. */
+  public newSymbol: string;
 }
 
 /** Holds the data associated with a "remove token from automaton" action. */
