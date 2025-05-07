@@ -2334,10 +2334,10 @@ export default class StateManager {
     ev.target.value = null;
 
     const fileText = file.text().then(
-      (text) => {
+      (text: string): any => {
         return JSON.parse(text);
       },
-      (reject_reason) => {
+      (reject_reason: any): any => {
         console.error("could not get file text, reason was", reject_reason);
         return null;
       },
