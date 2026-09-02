@@ -1317,7 +1317,7 @@ export default class StateManager {
    * - If they were not hovering over a node, then the tentative
    * transition is simply discarded.
    * - If they were hovering over a node, and no transition previously existed
-   * between the two nodes, then such a new transition is created.
+   * between the two nodes, then such a new transition is created and selected.
    * - If they were hovering over a node that was already connected to the
    * source node, then the existing transition is selected.
    */
@@ -1339,6 +1339,14 @@ export default class StateManager {
           StateManager._tentativeTransitionSource,
           StateManager._tentativeTransitionTarget,
         );
+        // I know there might be a more efficient way than rescanning the whole thing for the transition we just added, but I don't want to mess it up.
+        const newTransition = StateManager.transitions.find(
+          (t) =>
+            t.sourceNode.id === StateManager._tentativeTransitionSource.id &&
+            t.destNode.id === StateManager.tentativeTransitionTarget.id,
+        );
+        StateManager.deselectAllObjects();
+        StateManager.selectObject(newTransition);
       }
     }
 
