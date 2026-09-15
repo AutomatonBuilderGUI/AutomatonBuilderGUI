@@ -22,6 +22,7 @@ import NodeWrapper from "./NodeWrapper";
 import { useActionStack } from "./utilities/ActionStackUtilities";
 import { GrTest } from "react-icons/gr";
 import TestCasesPanel from "./components/TestCasesPanel";
+import SettingsWindow from "./components/SettingsWindow";
 
 function App({ defaultDarkMode }: { defaultDarkMode: boolean }) {
   const [currentTool, setCurrentTool] = useState(Tool.States);
@@ -148,6 +149,15 @@ function App({ defaultDarkMode }: { defaultDarkMode: boolean }) {
     setAreTokensUnique(unique);
   }, [StateManager.alphabet]);
 
+  // React state and open/close functions for the "Settings" modal window.
+  const [settingsWindowOpen, setSettingsWindowOpen] = useState(false);
+  const openSettingsWindow = () => {
+    setSettingsWindowOpen(true);
+  };
+  const closeSettingsWindow = () => {
+    setSettingsWindowOpen(false);
+  };
+
   // React state and open/close functions for the "Configure Automaton"
   // modal window.
   const [configWindowOpen, setConfigWindowOpen] = useState(false);
@@ -256,6 +266,15 @@ function App({ defaultDarkMode }: { defaultDarkMode: boolean }) {
             <div className="flex flex-col items-center mt-4">
               <button
                 className="rounded-full p-2 m-1 mx-2 block bg-amber-500 text-white text-center"
+                onClick={openSettingsWindow}
+              >
+                <div className="flex flex-row items-center place-content-center mx-2">
+                  <BsGearFill className="mr-1" />
+                  Settings
+                </div>
+              </button>
+              <button
+                className="rounded-full p-2 m-1 mx-2 block bg-amber-500 text-white text-center"
                 onClick={openConfigWindow}
               >
                 <div className="flex flex-row items-center place-content-center mx-2">
@@ -306,6 +325,17 @@ function App({ defaultDarkMode }: { defaultDarkMode: boolean }) {
                 close={closeConfigWindow}
               >
                 <ConfigureAutomatonWindow />
+              </ClosableModalWindow>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      }
+      {
+        <AnimatePresence>
+          {settingsWindowOpen && (
+            <motion.div>
+              <ClosableModalWindow title="Settings" close={closeSettingsWindow}>
+                <SettingsWindow />
               </ClosableModalWindow>
             </motion.div>
           )}
