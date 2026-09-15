@@ -1,4 +1,4 @@
-import { ReactElement, useEffect, useState } from "react";
+import { ReactElement, useContext, useEffect, useState } from "react";
 import TokenWrapper from "../TokenWrapper";
 import StateManager from "../StateManager";
 import {
@@ -16,6 +16,8 @@ import {
   BsPalette,
   BsPaletteFill,
 } from "react-icons/bs";
+
+import { DarkModeContext } from "../DarkModeContext";
 
 function SettingsMenuItem({
   name,
@@ -44,15 +46,7 @@ function SettingsMenuItem({
 }
 
 function AppearancePanel() {
-  // TODO: Look into context for passing dark mode down
-  // https://react.dev/learn/passing-data-deeply-with-context
-
-  // TODO: Grid display toggle?
-  const [useDarkMode, setDarkMode] = useState(StateManager.useDarkMode);
-  useEffect(() => {
-    StateManager.useDarkMode = useDarkMode;
-  }, [useDarkMode]);
-
+  const { useDarkMode, setDarkMode } = useContext(DarkModeContext);
   const darkModeToggle = (
     <input
       type="checkbox"
