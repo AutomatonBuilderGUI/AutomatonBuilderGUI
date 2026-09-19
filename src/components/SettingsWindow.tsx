@@ -82,12 +82,24 @@ function AboutPanel() {
           University Vancouver computer science students by Malcolm Anderson and
           Professor Farhana Kabir.
         </div>
-        <button className="rounded-full p-2 px-4 m-1 mx-2 block bg-blue-600 text-white text-center">
+        <a
+          href="https://github.com/AutomatonBuilderGUI/AutomatonBuilderGUI"
+          className="rounded-full p-2 px-4 m-1 mx-2 mb-2 block bg-blue-600 text-white text-center w-fit"
+        >
           <div className="flex flex-row items-center">
             <BsGithub />
             &nbsp;View &amp; Contribute on GitHub&nbsp;&rsaquo;
           </div>
-        </button>
+        </a>
+        <a
+          href="https://github.com/AutomatonBuilderGUI/AutomatonBuilderGUI/issues"
+          className="rounded-full p-2 px-4 m-1 mx-2 block bg-red-600 text-white text-center w-fit"
+        >
+          <div className="flex flex-row items-center">
+            <BsBugFill />
+            &nbsp;Report Bugs on GitHub&nbsp;&rsaquo;
+          </div>
+        </a>
       </div>
     </div>
   );
@@ -122,14 +134,6 @@ export default function SettingsWindow() {
           </div>
           <div>
             <SettingsMenuItem
-              name="Report a Bug"
-              icon={currentPage === "reportBug" ? <BsBugFill /> : <BsBug />}
-              selected={currentPage === "reportBug"}
-              onClick={() => {
-                setCurrentPage("reportBug");
-              }}
-            />
-            <SettingsMenuItem
               name="About"
               icon={
                 currentPage === "about" ? (
@@ -145,7 +149,7 @@ export default function SettingsWindow() {
             />
           </div>
         </div>
-        <div className="ml-4">
+        <div className="ml-4 w-full">
           <CurrentPanel id={currentPage} />
         </div>
       </div>
