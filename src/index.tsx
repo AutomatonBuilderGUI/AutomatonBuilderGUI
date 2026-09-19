@@ -270,7 +270,7 @@ function App({ defaultDarkMode }: { defaultDarkMode: boolean }) {
 
               <div className="flex flex-col items-center mt-4">
                 <button
-                  className="rounded-full p-2 m-1 mx-2 block bg-amber-500 text-white text-center"
+                  className="rounded-full p-2 m-1 mx-2 block bg-slate-500 text-white text-center"
                   onClick={openSettingsWindow}
                 >
                   <div className="flex flex-row items-center place-content-center mx-2">

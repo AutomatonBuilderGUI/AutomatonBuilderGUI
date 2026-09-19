@@ -57,14 +57,15 @@ export default function ModalWindow(props: React.PropsWithChildren) {
       ></div>
       <div className={`fixed inset-0 z-50 w-screen overflow-y-auto`}>
         <div
-          className={`flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0`}
+          className={`flex min-h-full justify-center p-4 text-center items-center sm:p-0`}
         >
           <motion.div
             initial={{ opacity: 0, y: -30 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -30 }}
+            className="sm:w-[95%] md:w-[70%] lg:w-[50%] h-full"
           >
-            <div className="relative transform overflow-hidden rounded-xl bg-gray-100 dark:bg-gray-800 dark:text-white text-left shadow-xl sm:w-full sm:max-w-lg">
+            <div className="relative transform overflow-hidden rounded-xl bg-gray-100 dark:bg-gray-800 dark:text-white text-left shadow-xl w-full h-full">
               {props.children}
             </div>
           </motion.div>
