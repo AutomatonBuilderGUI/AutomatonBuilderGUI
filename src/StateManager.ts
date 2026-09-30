@@ -415,12 +415,6 @@ export default class StateManager {
   }
 
   public static exportAutomatonToImage() {
-    if (StateManager._useDarkMode) {
-      console.log("using dark mode!");
-    } else {
-      console.log("Not using dark mode");
-    }
-
     if (!StateManager._stage) {
       console.error("error: _stage is not initialized");
       return;
