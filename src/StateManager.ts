@@ -445,7 +445,7 @@ export default class StateManager {
     */
     let background: Konva.Rect;
 
-    if (StateManager._useDarkMode) {
+    if (StateManager.useDarkMode) {
       background = new Konva.Rect({
         x: bounds.x,
         y: bounds.y,
