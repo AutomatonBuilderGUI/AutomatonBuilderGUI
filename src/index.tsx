@@ -9,7 +9,7 @@ import SelectableObject from "./SelectableObject";
 import DetailsBox from "./components/DetailsBox/DetailsBox";
 import { ClosableModalWindow } from "./components/ModalWindow";
 import ConfigureAutomatonWindow from "./components/ConfigureAutomatonWindow";
-import { BsGearFill, BsMoonFill } from "react-icons/bs";
+import { BsGearFill, BsMoonFill, BsGithub } from "react-icons/bs";
 import TestStringWindow from "./components/TestStringWindow";
 import InformationBox, {
   InformationBoxType,
@@ -33,6 +33,7 @@ function App({ defaultDarkMode }: { defaultDarkMode: boolean }) {
   const [areTokensUnique, setAreTokensUnique] = useState(true);
   const [_, currentStackLocation] = useActionStack();
   const [testsPanelOpen, setTestsPanelOpen] = useState(false);
+  const hash = "PLACEHOLDER_HASH";
 
   // React state and open/close functions for the "Tests" panel
   const toggleTestsPanel = () => {
@@ -281,6 +282,10 @@ function App({ defaultDarkMode }: { defaultDarkMode: boolean }) {
                   Dark Mode
                 </div>
               </button>
+            </div>
+            <div className="flex flex-row absolute bottom-2 items-center place-content-center mx-2">
+              <BsGithub className="mr-1" />
+              built from : [{hash}]
             </div>
           </FloatingPanel>
           {testsPanelOpen && <TestCasesPanel />}

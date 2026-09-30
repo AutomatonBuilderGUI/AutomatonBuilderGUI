@@ -4,7 +4,7 @@
   "description": "",
   "private": true,
   "scripts": {
-    "build": "webpack && npm run build:tailwind && npm run build:cp-public",
+    "build": "sed -i \"s/PLACEHOLDER_HASH/$(git rev-parse --short HEAD)/g\" src/index.tsx && webpack && npm run build:tailwind && npm run build:cp-public && sed -i \"s/$(git rev-parse --short HEAD)/PLACEHOLDER_HASH/g\" src/index.tsx",
     "build:tailwind": "npx tailwindcss -i ./public/input.css -o ./dist/output.css",
     "build:cp-public": "cpy 'public/**/*' dist --cwd=./ --parents",
     "test": "echo \"Error: no test specified\" && exit 1",
