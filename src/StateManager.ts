@@ -443,27 +443,14 @@ export default class StateManager {
     check tone of screen and set background
     based on dark/light mode
     */
-    let background: Konva.Rect;
-
-    if (StateManager.useDarkMode) {
-      background = new Konva.Rect({
-        x: bounds.x,
-        y: bounds.y,
-        width: bounds.width,
-        height: bounds.height,
-        fill: "black",
-        listening: false,
-      });
-    } else {
-      background = new Konva.Rect({
-        x: bounds.x,
-        y: bounds.y,
-        width: bounds.width,
-        height: bounds.height,
-        fill: "white",
-        listening: false,
-      });
-    }
+    const background: Konva.Rect = new Konva.Rect({
+      x: bounds.x,
+      y: bounds.y,
+      width: bounds.width,
+      height: bounds.height,
+      fill: StateManager.useDarkMode ? "black" : "white",
+      listening: false,
+    });
 
     StateManager._gridLayer.add(background);
     StateManager._gridLayer.moveToBottom();
