@@ -415,6 +415,12 @@ export default class StateManager {
   }
 
   public static exportAutomatonToImage() {
+    if (StateManager._useDarkMode) {
+      console.log("using dark mode!");
+    } else {
+      console.log("Not using dark mode");
+    }
+
     if (!StateManager._stage) {
       console.error("error: _stage is not initialized");
       return;
@@ -439,15 +445,32 @@ export default class StateManager {
 
     const bounds = StateManager.getDiagramBounds();
 
-    //add temporary white background
-    const background = new Konva.Rect({
-      x: bounds.x,
-      y: bounds.y,
-      width: bounds.width,
-      height: bounds.height,
-      fill: "white",
-      listening: false,
-    });
+    /*
+    check tone of screen and set background
+    based on dark/light mode
+    */
+    let background: Konva.Rect;
+
+    if (StateManager._useDarkMode) {
+      background = new Konva.Rect({
+        x: bounds.x,
+        y: bounds.y,
+        width: bounds.width,
+        height: bounds.height,
+        fill: "black",
+        listening: false,
+      });
+    } else {
+      background = new Konva.Rect({
+        x: bounds.x,
+        y: bounds.y,
+        width: bounds.width,
+        height: bounds.height,
+        fill: "white",
+        listening: false,
+      });
+    }
+
     StateManager._gridLayer.add(background);
     StateManager._gridLayer.moveToBottom();
     StateManager._gridLayer.batchDraw();
