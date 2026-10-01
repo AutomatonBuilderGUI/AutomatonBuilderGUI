@@ -439,10 +439,7 @@ export default class StateManager {
 
     const bounds = StateManager.getDiagramBounds();
 
-    /*
-    check tone of screen and set background
-    based on dark/light mode
-    */
+    // Set background based on dark/light mode.
     const background: Konva.Rect = new Konva.Rect({
       x: bounds.x,
       y: bounds.y,
