@@ -439,15 +439,16 @@ export default class StateManager {
 
     const bounds = StateManager.getDiagramBounds();
 
-    //add temporary white background
-    const background = new Konva.Rect({
+    // Set background based on dark/light mode.
+    const background: Konva.Rect = new Konva.Rect({
       x: bounds.x,
       y: bounds.y,
       width: bounds.width,
       height: bounds.height,
-      fill: "white",
+      fill: StateManager.useDarkMode ? "black" : "white",
       listening: false,
     });
+
     StateManager._gridLayer.add(background);
     StateManager._gridLayer.moveToBottom();
     StateManager._gridLayer.batchDraw();
