@@ -287,7 +287,7 @@ function App({ defaultDarkMode }: { defaultDarkMode: boolean }) {
             </div>
             <div className="flex flex-row absolute bottom-1 items-center place-content-center mx-2">
               <BsClock className="mr-1" />
-              built at : [{new Date(_TIME).toLocaleDateString()}]
+              built at : [{new Date(_TIME).toLocaleString()}]
             </div>
           </FloatingPanel>
           {testsPanelOpen && <TestCasesPanel />}
