@@ -33,8 +33,6 @@ function App({ defaultDarkMode }: { defaultDarkMode: boolean }) {
   const [areTokensUnique, setAreTokensUnique] = useState(true);
   const [_, currentStackLocation] = useActionStack();
   const [testsPanelOpen, setTestsPanelOpen] = useState(false);
-  const hash = process.env.GIT_HASH;
-  const time = new Date(process.env.TIME);
   // React state and open/close functions for the "Tests" panel
   const toggleTestsPanel = () => {
     setTestsPanelOpen(!testsPanelOpen);
@@ -285,11 +283,11 @@ function App({ defaultDarkMode }: { defaultDarkMode: boolean }) {
             </div>
             <div className="flex flex-row absolute bottom-6 items-center place-content-center mx-2">
               <BsGithub className="mr-1" />
-              built from : [{hash}]
+              built from : [{_HASH}]
             </div>
             <div className="flex flex-row absolute bottom-1 items-center place-content-center mx-2">
               <BsClock className="mr-1" />
-              built at : [{time.toLocaleString()}]
+              built at : [{new Date(_TIME).toLocaleDateString()}]
             </div>
           </FloatingPanel>
           {testsPanelOpen && <TestCasesPanel />}
