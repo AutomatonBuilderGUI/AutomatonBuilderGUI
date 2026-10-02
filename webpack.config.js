@@ -1,5 +1,5 @@
 const path = require("path");
-
+const Dotenv = require("dotenv-webpack");
 module.exports = {
   entry: "./src/index.tsx",
   // Once this is ready for release, swap the commented and uncommented portions of the next two lines.
@@ -23,4 +23,5 @@ module.exports = {
     filename: "bundle.js",
     path: path.resolve(__dirname, "dist"),
   },
+  plugins: [new Dotenv()],
 };

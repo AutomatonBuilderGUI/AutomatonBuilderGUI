@@ -4,7 +4,7 @@
   "description": "",
   "private": true,
   "scripts": {
-    "build": "git rev-parse --short HEAD && sed -i \"s/PLACEHOLDER_HASH/$(git rev-parse --short HEAD)/g\" src/index.tsx && webpack && npm run build:tailwind && npm run build:cp-public && sed -i \"s/$(git rev-parse --short HEAD)/PLACEHOLDER_HASH/g\" src/index.tsx",
+    "build": "bash build.env.sh && webpack && npm run build:tailwind && npm run build:cp-public",
     "build:tailwind": "npx tailwindcss -i ./public/input.css -o ./dist/output.css",
     "build:cp-public": "cpy 'public/**/*' dist --cwd=./ --parents",
     "test": "echo \"Error: no test specified\" && exit 1",
@@ -19,6 +19,7 @@
     "@types/react-dom": "^18.2.7",
     "@types/uuid": "^9.0.4",
     "cpy-cli": "^5.0.0",
+    "dotenv-webpack": "^9.0.0",
     "eslint": "^9.17.0",
     "eslint-config-prettier": "^9.1.0",
     "eslint-plugin-react": "^7.37.3",
