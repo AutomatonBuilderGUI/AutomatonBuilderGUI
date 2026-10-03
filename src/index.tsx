@@ -9,7 +9,16 @@ import SelectableObject from "./SelectableObject";
 import DetailsBox from "./components/DetailsBox/DetailsBox";
 import { ClosableModalWindow } from "./components/ModalWindow";
 import ConfigureAutomatonWindow from "./components/ConfigureAutomatonWindow";
-import { BsGearFill, BsMoonFill, BsGithub, BsClock } from "react-icons/bs";
+import {
+  BsGearFill,
+  BsMoonFill,
+  BsGithub,
+  BsClock,
+  BsChatText,
+  BsLink,
+  BsEnvelope,
+  BsPerson,
+} from "react-icons/bs";
 import TestStringWindow from "./components/TestStringWindow";
 import InformationBox, {
   InformationBoxType,
@@ -22,6 +31,7 @@ import NodeWrapper from "./NodeWrapper";
 import { useActionStack } from "./utilities/ActionStackUtilities";
 import { GrTest } from "react-icons/gr";
 import TestCasesPanel from "./components/TestCasesPanel";
+import BuildGitInfo from "./components/buildListInfo";
 
 function App({ defaultDarkMode }: { defaultDarkMode: boolean }) {
   const [currentTool, setCurrentTool] = useState(Tool.States);
@@ -337,21 +347,37 @@ function App({ defaultDarkMode }: { defaultDarkMode: boolean }) {
         {configGitWindowOpen && (
           <ClosableModalWindow title="Build information" close={closeGitWindow}>
             <ul>
-              <p>Git Hash: {_HASH}</p>
-              <p>Build Time: {new Date(_TIME).toLocaleString()}</p>
-              <p>
-                Git commit link:{" "}
-                <a
-                  style={{ color: "#0000FF", textDecoration: "underline" }}
-                  href={_URL}
-                >
+              <BuildGitInfo>
+                <li className="flex items-center">
                   {" "}
-                  {_HASH}
-                </a>
-              </p>
-              <p>committer username: {_GIT_NAME}</p>
-              <p>committer e-mail: {_GIT_EMAIL}</p>
-              <p>Commit message: {_GIT_MESSAGE}</p>
+                  <BsLink className="mr-1" />
+                  <a
+                    style={{ color: "#0000FF", textDecoration: "underline" }}
+                    href={_URL}
+                    target="_blank"
+                  >
+                    {_HASH}
+                  </a>
+                </li>
+                <li className="flex items-center">
+                  <BsClock className="mr-1" />
+                  <p>{new Date(_TIME).toLocaleString()}</p>
+                </li>
+                <li className="flex items-center">
+                  {" "}
+                  <BsEnvelope className="mr-1" />
+                  {_GIT_EMAIL}
+                </li>
+                <li className="flex items-center">
+                  {" "}
+                  <BsPerson className="mr-1" />
+                  {_GIT_NAME}
+                </li>
+                <li className="flex items-center">
+                  <BsChatText className="mr-1" />
+                  {_GIT_MESSAGE}
+                </li>
+              </BuildGitInfo>
             </ul>
           </ClosableModalWindow>
         )}
