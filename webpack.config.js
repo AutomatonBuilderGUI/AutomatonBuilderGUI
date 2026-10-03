@@ -3,8 +3,17 @@ const webpack = require("webpack");
 const { execSync } = require("child_process");
 
 const hash = execSync("git rev-parse --short HEAD").toString().trim();
-
 const time = new Date().toISOString();
+// construct git url to commit based on the remote origin and commit hash
+const git = execSync("git config --get remote.origin.url").toString().trim();
+const giturl =
+  "https://" +
+  git
+    .substring(git.indexOf("@") + 1)
+    .replace(":", "/")
+    .replace(".git", "") +
+  "/commit/" +
+  hash;
 
 module.exports = {
   entry: "./src/index.tsx",
@@ -33,6 +42,7 @@ module.exports = {
     new webpack.DefinePlugin({
       _HASH: JSON.stringify(hash),
       _TIME: JSON.stringify(time),
+      _URL: JSON.stringify(giturl),
     }),
   ],
 };

@@ -283,7 +283,14 @@ function App({ defaultDarkMode }: { defaultDarkMode: boolean }) {
             </div>
             <div className="flex flex-row absolute bottom-6 items-center place-content-center mx-2">
               <BsGithub className="mr-1" />
-              built from : [{_HASH}]
+              built from : [
+              <a
+                href={_URL}
+                style={{ color: "#0000FF", textDecoration: "underline" }}
+              >
+                {_HASH}
+              </a>
+              ]
             </div>
             <div className="flex flex-row absolute bottom-1 items-center place-content-center mx-2">
               <BsClock className="mr-1" />
