@@ -156,6 +156,14 @@ function App({ defaultDarkMode }: { defaultDarkMode: boolean }) {
   const closeConfigWindow = () => {
     setConfigWindowOpen(false);
   };
+  // react state for opening and closing the git information UI
+  const [configGitWindowOpen, setconfigGitWindowOpen] = useState(false);
+  const openGitWindow = () => {
+    setconfigGitWindowOpen(true);
+  };
+  const closeGitWindow = () => {
+    setconfigGitWindowOpen(false);
+  };
 
   // React state and enable/disable functions for dark mode.
   const [useDarkMode, setDarkMode] = useState(defaultDarkMode);
@@ -284,12 +292,12 @@ function App({ defaultDarkMode }: { defaultDarkMode: boolean }) {
             <div className="flex flex-row absolute bottom-6 items-center place-content-center mx-2">
               <BsGithub className="mr-1" />
               built from : [
-              <a
-                href={_URL}
+              <button
+                onClick={openGitWindow}
                 style={{ color: "#0000FF", textDecoration: "underline" }}
               >
                 {_HASH}
-              </a>
+              </button>
               ]
             </div>
             <div className="flex flex-row absolute bottom-1 items-center place-content-center mx-2">
@@ -325,6 +333,29 @@ function App({ defaultDarkMode }: { defaultDarkMode: boolean }) {
           )}
         </AnimatePresence>
       }
+      <div>
+        {configGitWindowOpen && (
+          <ClosableModalWindow title="Build information" close={closeGitWindow}>
+            <ul>
+              <p>Git Hash: {_HASH}</p>
+              <p>Build Time: {new Date(_TIME).toLocaleString()}</p>
+              <p>
+                Git commit link:{" "}
+                <a
+                  style={{ color: "#0000FF", textDecoration: "underline" }}
+                  href={_URL}
+                >
+                  {" "}
+                  {_HASH}
+                </a>
+              </p>
+              <p>committer username: {_GIT_NAME}</p>
+              <p>committer e-mail: {_GIT_EMAIL}</p>
+              <p>Commit message: {_GIT_MESSAGE}</p>
+            </ul>
+          </ClosableModalWindow>
+        )}
+      </div>
     </div>
   );
 }
