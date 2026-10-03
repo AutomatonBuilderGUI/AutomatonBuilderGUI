@@ -4,9 +4,10 @@ const { execSync } = require("child_process");
 
 const hash = execSync("git rev-parse --short HEAD").toString().trim();
 const time = new Date().toISOString();
-const user = execSync("git log -1 --pretty=format:'%ae'").toString().trim();
-const email = execSync("git log -1 --pretty=format:'%an'").toString().trim();
-const message = execSync("git log -1 --pretty=%B").toString().trim();
+const user = execSync("git log -1 --pretty=format:'%an'").toString().trim();
+const email = execSync("git log -1 --pretty=format:'%ae'").toString().trim();
+const message =
+  '"' + execSync("git log -1 --pretty=%B").toString().trim() + '"';
 // construct git url to commit based on the remote origin and commit hash
 const git = execSync("git config --get remote.origin.url").toString().trim();
 const giturl =
