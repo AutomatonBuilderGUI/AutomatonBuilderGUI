@@ -304,7 +304,7 @@ function App({ defaultDarkMode }: { defaultDarkMode: boolean }) {
               built from : [
               <button
                 onClick={openGitWindow}
-                style={{ color: "#0000FF", textDecoration: "underline" }}
+                style={{ color: "#66A0FF", textDecoration: "underline" }}
               >
                 {_HASH}
               </button>
@@ -352,7 +352,7 @@ function App({ defaultDarkMode }: { defaultDarkMode: boolean }) {
                   {" "}
                   <BsLink className="mr-1" />
                   <a
-                    style={{ color: "#0000FF", textDecoration: "underline" }}
+                    style={{ color: "#66A0FF", textDecoration: "underline" }}
                     href={_URL}
                     target="_blank"
                   >

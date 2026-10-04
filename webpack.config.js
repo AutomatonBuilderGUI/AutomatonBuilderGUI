@@ -1,25 +1,37 @@
 const path = require("path");
 const webpack = require("webpack");
 const { execSync } = require("child_process");
-
+// fetch git status, user, email, commit msg and time of build
 const hash = execSync("git rev-parse --short HEAD").toString().trim();
 const time = new Date().toISOString();
-const user = execSync("git log -1 --pretty=format:'%an'").toString().trim();
-const email = execSync("git log -1 --pretty=format:'%ae'").toString().trim();
+const user = execSync("git log -1 --pretty=%an").toString().trim();
+const email = execSync("git log -1 --pretty=%ae").toString().trim();
 const message =
   '"' + execSync("git log -1 --pretty=%B").toString().trim() + '"';
-// construct git url to commit based on the remote origin and commit hash
-// TODO: find a way to get staus of the commit (pushed or not) and not display
-// the url. For now unpushed git commits will send you to a 404 github page.
+/*
+ Construct git url to commit based on the remote origin and commit hash
+ this covers the case that https is used as wel as https
+ TODO: Find a way to get staus of the commit (pushed or not) and not display
+ the url. For now unpushed git commits will send you to a 404 github page.
+ Simply making a HEAD request before display will not work because of CORS.
+*/
 const git = execSync("git config --get remote.origin.url").toString().trim();
-const giturl =
-  "https://" +
-  git
-    .substring(git.indexOf("@") + 1)
-    .replace(":", "/")
-    .replace(".git", "") +
-  "/commit/" +
-  hash;
+let giturl;
+// if using ssh then strip git@ and add https//
+if (git.startsWith("git@")) {
+  giturl =
+    "https://" +
+    git
+      .substring(git.indexOf("@") + 1)
+      .replace(":", "/")
+      .replace(".git", "") +
+    "/commit/" +
+    hash;
+}
+// if not then just replace the .git and and commit hash
+else {
+  giturl = git.replace(".git", "") + " /commit/" + hash;
+}
 
 module.exports = {
   entry: "./src/index.tsx",
