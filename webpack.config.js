@@ -10,7 +10,7 @@ const message =
   '"' + execSync("git log -1 --pretty=%B").toString().trim() + '"';
 /*
  Construct git url to commit based on the remote origin and commit hash
- this covers the case that https is used as wel as https
+ this covers both ssh and https remote urls
  TODO: Find a way to get staus of the commit (pushed or not) and not display
  the url. For now unpushed git commits will send you to a 404 github page.
  Simply making a HEAD request before display will not work because of CORS.
