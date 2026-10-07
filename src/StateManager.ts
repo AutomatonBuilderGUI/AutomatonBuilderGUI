@@ -1549,10 +1549,12 @@ export default class StateManager {
 
     let setTokenSymbolForward = (data: SetTokenSymbolActionData) => {
       data.token.symbol = data.newSymbol;
+      this.updateTransitions();
     };
 
     let setTokenSymbolBackward = (data: SetTokenSymbolActionData) => {
       data.token.symbol = data.oldSymbol;
+      this.updateTransitions();
     };
 
     let setTokenSymbolAction = new Action(
