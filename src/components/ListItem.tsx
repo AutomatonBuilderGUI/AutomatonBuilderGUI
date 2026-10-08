@@ -12,7 +12,7 @@ interface ModalWindowListItemProps {
  */
 export function CoreListItem(props: React.PropsWithChildren) {
   return (
-    <div className="flow-root bg-white dark:bg-gray-600 p-2 px-2 first:rounded-t-lg last:rounded-b-lg">
+    <div className="flow-root bg-white dark:bg-gray-600 p-2 px-2 first:rounded-t-lg last:rounded-b-lg w-full">
       {props.children}
     </div>
   );

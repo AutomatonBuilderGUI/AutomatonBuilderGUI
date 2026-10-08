@@ -22,6 +22,8 @@ import NodeWrapper from "./NodeWrapper";
 import { useActionStack } from "./utilities/ActionStackUtilities";
 import { GrTest } from "react-icons/gr";
 import TestCasesPanel from "./components/TestCasesPanel";
+import SettingsWindow from "./components/SettingsWindow";
+import { DarkModeContext } from "./DarkModeContext";
 
 function App({ defaultDarkMode }: { defaultDarkMode: boolean }) {
   const [currentTool, setCurrentTool] = useState(Tool.States);
@@ -148,6 +150,15 @@ function App({ defaultDarkMode }: { defaultDarkMode: boolean }) {
     setAreTokensUnique(unique);
   }, [StateManager.alphabet]);
 
+  // React state and open/close functions for the "Settings" modal window.
+  const [settingsWindowOpen, setSettingsWindowOpen] = useState(false);
+  const openSettingsWindow = () => {
+    setSettingsWindowOpen(true);
+  };
+  const closeSettingsWindow = () => {
+    setSettingsWindowOpen(false);
+  };
+
   // React state and open/close functions for the "Configure Automaton"
   // modal window.
   const [configWindowOpen, setConfigWindowOpen] = useState(false);
@@ -160,12 +171,15 @@ function App({ defaultDarkMode }: { defaultDarkMode: boolean }) {
 
   // React state and enable/disable functions for dark mode.
   const [useDarkMode, setDarkMode] = useState(defaultDarkMode);
-  const toggleDarkMode = () => {
-    setDarkMode(!useDarkMode);
-  };
   useEffect(() => {
     StateManager.useDarkMode = useDarkMode;
   }, [useDarkMode]);
+  const darkModeToggle = {
+    useDarkMode: useDarkMode,
+    setDarkMode: (v: boolean) => {
+      setDarkMode(v);
+    },
+  };
 
   // Create a DFA from the current state, and get the errors from it
   let dfa = StateManager.dfa;
@@ -195,122 +209,141 @@ function App({ defaultDarkMode }: { defaultDarkMode: boolean }) {
 
   return (
     <div className={useDarkMode ? "dark" : ""}>
-      <NodeView />
-      <div className="flex flex-row h-screen text-center">
-        <div className="overflow-y-auto">
-          <FloatingPanel heightPolicy="screen" style={{ width: "300px" }}>
-            <DetailsBox
-              selection={selectedObjects}
-              startNode={startNode}
-              setStartNode={setStartNode}
+      <DarkModeContext.Provider value={darkModeToggle}>
+        <NodeView />
+        <div className="flex flex-row h-screen text-center">
+          <div className="overflow-y-auto">
+            <FloatingPanel heightPolicy="screen" style={{ width: "300px" }}>
+              <DetailsBox
+                selection={selectedObjects}
+                startNode={startNode}
+                setStartNode={setStartNode}
+              />
+
+              <div className="max-h-96 overflow-y-auto">
+                <AnimatePresence>{errorBoxes}</AnimatePresence>
+              </div>
+
+              {/* Example error message boxes commented out */}
+              {/*
+                      <InformationBox infoBoxType={InformationBoxType.Error}>
+                          State "q0" has multiple transitions for token "a"
+                      </InformationBox>
+                      <InformationBox infoBoxType={InformationBoxType.Error}>
+                          State "q0" has no transition for token "b"
+                      </InformationBox>
+                      <InformationBox infoBoxType={InformationBoxType.Error}>
+                          Transitions on empty string (ε) not allowed in DFA
+                      </InformationBox>
+                      <InformationBox infoBoxType={InformationBoxType.Error}>
+                          Alphabet needs at least one token
+                      </InformationBox>
+                      <InformationBox infoBoxType={InformationBoxType.Error}>
+                          Token "c" is repeated in alphabet
+                      </InformationBox>
+                      <InformationBox infoBoxType={InformationBoxType.Warning}>
+                          State "q3" is inaccessible
+                      </InformationBox>
+                      <InformationBox infoBoxType={InformationBoxType.Warning}>
+                          Accept state "q4" is inaccessible; automaton will always reject
+                      </InformationBox>
+                      */}
+
+              <TestStringWindow />
+              {!isLabelUnique && (
+                <InformationBox infoBoxType={InformationBoxType.Error}>
+                  Duplicate state labels detected. Each state must have a unique
+                  label.
+                </InformationBox>
+              )}
+              {!areTokensUnique && (
+                <InformationBox infoBoxType={InformationBoxType.Error}>
+                  Duplicate tokens detected. Each token must be a unique
+                  character.
+                </InformationBox>
+              )}
+              {emptyStringToken && (
+                <InformationBox infoBoxType={InformationBoxType.Error}>
+                  Invalid token: Empty string detected.
+                </InformationBox>
+              )}
+
+              <div className="flex flex-col items-center mt-4">
+                <button
+                  className="rounded-full p-2 m-1 mx-2 block bg-slate-500 text-white text-center"
+                  onClick={openSettingsWindow}
+                >
+                  <div className="flex flex-row items-center place-content-center mx-2">
+                    <BsGearFill className="mr-1" />
+                    Settings
+                  </div>
+                </button>
+                <button
+                  className="rounded-full p-2 m-1 mx-2 block bg-amber-500 text-white text-center"
+                  onClick={openConfigWindow}
+                >
+                  <div className="flex flex-row items-center place-content-center mx-2">
+                    <BsGearFill className="mr-1" />
+                    Configure Automaton
+                  </div>
+                </button>
+                <button
+                  className="rounded-full p-2 m-1 mx-2 block bg-cyan-400 dark:bg-cyan-600 text-white text-center"
+                  onClick={toggleTestsPanel}
+                >
+                  <div className="flex flex-row items-center place-content-center mx-2">
+                    <GrTest className="mr-1" />
+                    Tests
+                  </div>
+                </button>
+              </div>
+            </FloatingPanel>
+            {testsPanelOpen && <TestCasesPanel />}
+          </div>
+
+          <FloatingPanel heightPolicy="screen">
+            <Toolbox
+              currentTool={currentTool}
+              setCurrentTool={setCurrentTool}
             />
-
-            <div className="max-h-96 overflow-y-auto">
-              <AnimatePresence>{errorBoxes}</AnimatePresence>
-            </div>
-
-            {/* Example error message boxes commented out */}
-            {/*
-                    <InformationBox infoBoxType={InformationBoxType.Error}>
-                        State "q0" has multiple transitions for token "a"
-                    </InformationBox>
-                    <InformationBox infoBoxType={InformationBoxType.Error}>
-                        State "q0" has no transition for token "b"
-                    </InformationBox>
-                    <InformationBox infoBoxType={InformationBoxType.Error}>
-                        Transitions on empty string (ε) not allowed in DFA
-                    </InformationBox>
-                    <InformationBox infoBoxType={InformationBoxType.Error}>
-                        Alphabet needs at least one token
-                    </InformationBox>
-                    <InformationBox infoBoxType={InformationBoxType.Error}>
-                        Token "c" is repeated in alphabet
-                    </InformationBox>
-                    <InformationBox infoBoxType={InformationBoxType.Warning}>
-                        State "q3" is inaccessible
-                    </InformationBox>
-                    <InformationBox infoBoxType={InformationBoxType.Warning}>
-                        Accept state "q4" is inaccessible; automaton will always reject
-                    </InformationBox>
-                    */}
-
-            <TestStringWindow />
-            {!isLabelUnique && (
-              <InformationBox infoBoxType={InformationBoxType.Error}>
-                Duplicate state labels detected. Each state must have a unique
-                label.
-              </InformationBox>
-            )}
-            {!areTokensUnique && (
-              <InformationBox infoBoxType={InformationBoxType.Error}>
-                Duplicate tokens detected. Each token must be a unique
-                character.
-              </InformationBox>
-            )}
-            {emptyStringToken && (
-              <InformationBox infoBoxType={InformationBoxType.Error}>
-                Invalid token: Empty string detected.
-              </InformationBox>
-            )}
-
-            <div className="flex flex-col items-center mt-4">
-              <button
-                className="rounded-full p-2 m-1 mx-2 block bg-amber-500 text-white text-center"
-                onClick={openConfigWindow}
-              >
-                <div className="flex flex-row items-center place-content-center mx-2">
-                  <BsGearFill className="mr-1" />
-                  Configure Automaton
-                </div>
-              </button>
-              <button
-                className="rounded-full p-2 m-1 mx-2 block bg-cyan-400 dark:bg-cyan-600 text-white text-center"
-                onClick={toggleTestsPanel}
-              >
-                <div className="flex flex-row items-center place-content-center mx-2">
-                  <GrTest className="mr-1" />
-                  Tests
-                </div>
-              </button>
-              <button
-                className="rounded-full p-2 m-1 mx-2 block bg-gray-500 text-white text-center"
-                onClick={toggleDarkMode}
-              >
-                <div className="flex flex-row items-center place-content-center mx-2">
-                  <BsMoonFill className="mr-1" />
-                  Dark Mode
-                </div>
-              </button>
-            </div>
           </FloatingPanel>
-          {testsPanelOpen && <TestCasesPanel />}
+
+          {/*Separates the left and right panels */}
+          <div className="grow"></div>
+
+          <FloatingPanel heightPolicy="screen" style={{ width: "250px" }}>
+            <DetailsBox_ActionStackViewer />
+          </FloatingPanel>
         </div>
-
-        <FloatingPanel heightPolicy="screen">
-          <Toolbox currentTool={currentTool} setCurrentTool={setCurrentTool} />
-        </FloatingPanel>
-
-        {/*Separates the left and right panels */}
-        <div className="grow"></div>
-
-        <FloatingPanel heightPolicy="screen" style={{ width: "250px" }}>
-          <DetailsBox_ActionStackViewer />
-        </FloatingPanel>
-      </div>
-      {
-        <AnimatePresence>
-          {configWindowOpen && (
-            <motion.div>
-              <ClosableModalWindow
-                title="Configure Automaton"
-                close={closeConfigWindow}
-              >
-                <ConfigureAutomatonWindow />
-              </ClosableModalWindow>
-            </motion.div>
-          )}
-        </AnimatePresence>
-      }
+        {
+          <AnimatePresence>
+            {configWindowOpen && (
+              <motion.div>
+                <ClosableModalWindow
+                  title="Configure Automaton"
+                  close={closeConfigWindow}
+                >
+                  <ConfigureAutomatonWindow />
+                </ClosableModalWindow>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        }
+        {
+          <AnimatePresence>
+            {settingsWindowOpen && (
+              <motion.div>
+                <ClosableModalWindow
+                  title="Settings"
+                  close={closeSettingsWindow}
+                >
+                  <SettingsWindow />
+                </ClosableModalWindow>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        }
+      </DarkModeContext.Provider>
     </div>
   );
 }
