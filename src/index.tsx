@@ -9,7 +9,16 @@ import SelectableObject from "./SelectableObject";
 import DetailsBox from "./components/DetailsBox/DetailsBox";
 import { ClosableModalWindow } from "./components/ModalWindow";
 import ConfigureAutomatonWindow from "./components/ConfigureAutomatonWindow";
-import { BsGearFill, BsMoonFill } from "react-icons/bs";
+import {
+  BsGearFill,
+  BsMoonFill,
+  BsGithub,
+  BsClock,
+  BsChatText,
+  BsLink,
+  BsEnvelope,
+  BsPerson,
+} from "react-icons/bs";
 import TestStringWindow from "./components/TestStringWindow";
 import InformationBox, {
   InformationBoxType,
@@ -22,6 +31,7 @@ import NodeWrapper from "./NodeWrapper";
 import { useActionStack } from "./utilities/ActionStackUtilities";
 import { GrTest } from "react-icons/gr";
 import TestCasesPanel from "./components/TestCasesPanel";
+import BuildGitInfo from "./components/BuildGitInfo";
 
 function App({ defaultDarkMode }: { defaultDarkMode: boolean }) {
   const [currentTool, setCurrentTool] = useState(Tool.States);
@@ -33,7 +43,6 @@ function App({ defaultDarkMode }: { defaultDarkMode: boolean }) {
   const [areTokensUnique, setAreTokensUnique] = useState(true);
   const [_, currentStackLocation] = useActionStack();
   const [testsPanelOpen, setTestsPanelOpen] = useState(false);
-
   // React state and open/close functions for the "Tests" panel
   const toggleTestsPanel = () => {
     setTestsPanelOpen(!testsPanelOpen);
@@ -156,6 +165,14 @@ function App({ defaultDarkMode }: { defaultDarkMode: boolean }) {
   };
   const closeConfigWindow = () => {
     setConfigWindowOpen(false);
+  };
+  // react state for opening and closing the git information UI
+  const [configGitWindowOpen, setconfigGitWindowOpen] = useState(false);
+  const openGitWindow = () => {
+    setconfigGitWindowOpen(true);
+  };
+  const closeGitWindow = () => {
+    setconfigGitWindowOpen(false);
   };
 
   // React state and enable/disable functions for dark mode.
@@ -282,6 +299,21 @@ function App({ defaultDarkMode }: { defaultDarkMode: boolean }) {
                 </div>
               </button>
             </div>
+            <div className="flex flex-row absolute bottom-6 items-center place-content-center mx-2">
+              <BsGithub className="mr-1" />
+              Built from: [
+              <button
+                onClick={openGitWindow}
+                className="text-blue-500 dark:text-blue-400 underline"
+              >
+                {_HASH}
+              </button>
+              ]
+            </div>
+            <div className="flex flex-row absolute bottom-1 items-center place-content-center mx-2">
+              <BsClock className="mr-1" />
+              Built at: [{new Date(_TIME).toLocaleString()}]
+            </div>
           </FloatingPanel>
           {testsPanelOpen && <TestCasesPanel />}
         </div>
@@ -311,6 +343,31 @@ function App({ defaultDarkMode }: { defaultDarkMode: boolean }) {
           )}
         </AnimatePresence>
       }
+      <div>
+        {configGitWindowOpen && (
+          <ClosableModalWindow title="Build Information" close={closeGitWindow}>
+            <ul>
+              <BuildGitInfo>
+                <li className="flex items-center">
+                  {" "}
+                  <BsLink className="mr-1" />
+                  <a
+                    className="text-[#66A0FF] underline"
+                    href={_URL}
+                    target="_blank"
+                  >
+                    {_HASH}
+                  </a>
+                </li>
+                <li className="flex items-center">
+                  <BsClock className="mr-1" />
+                  <p>{new Date(_TIME).toLocaleString()}</p>
+                </li>
+              </BuildGitInfo>
+            </ul>
+          </ClosableModalWindow>
+        )}
+      </div>
     </div>
   );
 }
