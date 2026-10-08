@@ -31,7 +31,7 @@ import NodeWrapper from "./NodeWrapper";
 import { useActionStack } from "./utilities/ActionStackUtilities";
 import { GrTest } from "react-icons/gr";
 import TestCasesPanel from "./components/TestCasesPanel";
-import BuildGitInfo from "./components/buildListInfo";
+import BuildGitInfo from "./components/BuildGitInfo";
 
 function App({ defaultDarkMode }: { defaultDarkMode: boolean }) {
   const [currentTool, setCurrentTool] = useState(Tool.States);
@@ -304,7 +304,7 @@ function App({ defaultDarkMode }: { defaultDarkMode: boolean }) {
               Built from: [
               <button
                 onClick={openGitWindow}
-                style={{ color: "#66A0FF", textDecoration: "underline" }}
+                className="text-blue-500 dark:text-blue-400 underline"
               >
                 {_HASH}
               </button>
@@ -312,7 +312,7 @@ function App({ defaultDarkMode }: { defaultDarkMode: boolean }) {
             </div>
             <div className="flex flex-row absolute bottom-1 items-center place-content-center mx-2">
               <BsClock className="mr-1" />
-              built at : [{new Date(_TIME).toLocaleString()}]
+              Built at: [{new Date(_TIME).toLocaleString()}]
             </div>
           </FloatingPanel>
           {testsPanelOpen && <TestCasesPanel />}
@@ -345,14 +345,14 @@ function App({ defaultDarkMode }: { defaultDarkMode: boolean }) {
       }
       <div>
         {configGitWindowOpen && (
-          <ClosableModalWindow title="Build information" close={closeGitWindow}>
+          <ClosableModalWindow title="Build Information" close={closeGitWindow}>
             <ul>
               <BuildGitInfo>
                 <li className="flex items-center">
                   {" "}
                   <BsLink className="mr-1" />
                   <a
-                    style={{ color: "#66A0FF", textDecoration: "underline" }}
+                    className="text-[#66A0FF] underline"
                     href={_URL}
                     target="_blank"
                   >
@@ -362,20 +362,6 @@ function App({ defaultDarkMode }: { defaultDarkMode: boolean }) {
                 <li className="flex items-center">
                   <BsClock className="mr-1" />
                   <p>{new Date(_TIME).toLocaleString()}</p>
-                </li>
-                <li className="flex items-center">
-                  {" "}
-                  <BsEnvelope className="mr-1" />
-                  {_GIT_EMAIL}
-                </li>
-                <li className="flex items-center">
-                  {" "}
-                  <BsPerson className="mr-1" />
-                  {_GIT_NAME}
-                </li>
-                <li className="flex items-center">
-                  <BsChatText className="mr-1" />
-                  {_GIT_MESSAGE}
                 </li>
               </BuildGitInfo>
             </ul>
