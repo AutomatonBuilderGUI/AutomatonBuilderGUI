@@ -301,7 +301,7 @@ function App({ defaultDarkMode }: { defaultDarkMode: boolean }) {
             </div>
             <div className="flex flex-row absolute bottom-6 items-center place-content-center mx-2">
               <BsGithub className="mr-1" />
-              built from : [
+              Built from: [
               <button
                 onClick={openGitWindow}
                 style={{ color: "#66A0FF", textDecoration: "underline" }}
