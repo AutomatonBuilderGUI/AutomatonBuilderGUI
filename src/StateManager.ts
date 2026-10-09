@@ -786,9 +786,9 @@ export default class StateManager {
     let actionStackLabel;
 
     if (nodes.length == 1) {
-      actionStackLabel = `Mark "${nodes[0].labelText}" as ${isAccept ? "Accepting" : "Rejecting"}`;
+      actionStackLabel = `Mark "${nodes[0].labelText}" As ${isAccept ? "Accepting" : "Rejecting"}`;
     } else {
-      actionStackLabel = `Mark ${nodes.length} selected states as ${isAccept ? "Accepting" : "Rejecting"}`;
+      actionStackLabel = `Mark ${nodes.length} Selected States As ${isAccept ? "Accepting" : "Rejecting"}`;
     }
 
     let setNodesIsAcceptAction = new Action(
@@ -880,9 +880,10 @@ export default class StateManager {
       });
     };
 
+    let maybeS = this.selectedObjects.length == 1 ? "" : "s";
     let setCommentsColorAction = new Action(
       "setCommentRegionColor",
-      `Set ${comments.length} comments color`,
+      `Set Color Of ${comments.length} Comment${maybeS}`,
       setColorForward,
       setColorBackward,
       { oldColors, newColor, comments },
@@ -909,9 +910,10 @@ export default class StateManager {
       });
     };
 
+    let maybeS = this.selectedObjects.length == 1 ? "" : "s";
     let setCommentsTextAction = new Action(
       "setCommentRegionText",
-      `Set ${comments.length} comments text`,
+      `Set Text Of ${comments.length} Comment${maybeS}`,
       setTextForward,
       setTextBackward,
       { oldTexts, newText, comments },
@@ -1002,7 +1004,6 @@ export default class StateManager {
     let nodeCount = this._clipboard.filter(
       (obj) => obj instanceof NodeWrapper,
     ).length;
-    let actionDescription = `Paste ${nodeCount} Object${nodeCount !== 1 ? "s" : ""}`;
 
     let performPasteForward = (data: PasteActionData) => {
       if (data.nodes.length === 0) {
@@ -1100,6 +1101,8 @@ export default class StateManager {
       StateManager._transitionLayer?.draw();
       StateManager.updateTransitions();
     };
+
+    let actionDescription = `Paste ${nodeCount} Object${nodeCount !== 1 ? "s" : ""}`;
     let pasteAction = new Action(
       "pasteClipboardObjects",
       actionDescription,
@@ -1419,7 +1422,7 @@ export default class StateManager {
 
     let removeTransitionAction = new Action(
       "removeTransition",
-      `Remove Transition "${transition.sourceNode.labelText}" to "${transition.destNode.labelText}"`,
+      `Remove Transition From "${transition.sourceNode.labelText}" To "${transition.destNode.labelText}"`,
       removeTransitionForward,
       removeTransitionBackward,
       { transition: transition },
@@ -2685,9 +2688,10 @@ export default class StateManager {
       });
     };
 
+    let maybeS = this.selectedObjects.length == 1 ? "" : "s";
     let moveCommentsAction = new Action(
       "moveComments",
-      `Move ${this.selectedObjects.length} Comments`,
+      `Move ${this.selectedObjects.length} Comment${maybeS}`,
       moveCommentsForward,
       moveCommentsBackward,
       { delta: delta, comments: [...this.selectedObjects] },
