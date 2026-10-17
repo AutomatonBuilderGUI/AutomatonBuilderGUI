@@ -13,6 +13,7 @@ import DFAState from "automaton-kit/lib/dfa/DFAState";
 import { convertIDtoLabelOrSymbol } from "./utilities/AutomatonUtilities";
 import UndoRedoManager, { Action, ActionData } from "./UndoRedoManager";
 import { Vector2d } from "konva/lib/types";
+import { KonvaEventObject } from "konva/lib/Node";
 
 /**
  * The "engine" behind the Automaton Builder GUI. It handles a lot of the
@@ -50,6 +51,11 @@ export default class StateManager {
   private static _resizeComment: CommentRegion | null = null;
 
   /**
+   * Normally, this is null. However, when the selection box is being used, this instead stores the corner where the user started dragging.
+   */
+  private static _selectionBoxStart: Vector2d | null = null;
+
+  /**
    * When the user is in the process of creating a transition, holds the
    * node that will be the transition's source.
    */
@@ -72,6 +78,9 @@ export default class StateManager {
 
   /** The arrow used to represent the start node. */
   private static _startStateLine: Konva.Arrow | null = null;
+
+  /** The layer of the Konva stage that draws the selection box (and perhaps other temporary constructs)*/
+  private static _conceptLayer: Konva.Layer | null = null;
 
   /** The layer of the Konva stage where nodes are drawn. */
   private static _nodeLayer: Konva.Layer | null = null;
@@ -203,7 +212,11 @@ export default class StateManager {
     this._stage.on("click", (ev) => StateManager.onClick.call(this, ev));
     this._stage.on("wheel", StateManager.handleWheelEvent);
     this._stage.on("dragmove", StateManager.onDragMove);
+    this._stage.on("pointerdown", StateManager.onPointerDown);
+    this._stage.on("pointermove", StateManager.onPointerMove);
+    this._stage.on("pointerup", StateManager.onPointerUp);
 
+    this._conceptLayer = new Konva.Layer();
     this._nodeLayer = new Konva.Layer();
     this._transitionLayer = new Konva.Layer();
     this._gridLayer = new Konva.Layer();
@@ -250,6 +263,7 @@ export default class StateManager {
     this._stage.add(this._commentLayer);
     this._stage.add(this._transitionLayer);
     this._stage.add(this._nodeLayer);
+    this._stage.add(this._conceptLayer);
 
     this._stage.on("mousemove", () => {
       if (StateManager._resizeComment == null) {
@@ -492,6 +506,148 @@ export default class StateManager {
     return StateManager._resizeComment;
   }
 
+  /** Returns true if the selection box is active. */
+  public static isSelectionBoxActive(): boolean {
+    return StateManager._selectionBoxStart != null;
+  }
+
+  /**
+   * Returns true if clicking and dragging would create a selection box or some other temporary construct. In general, this should block most click or drag actions.
+   * @param evt Whatever event is occuring. Should accept most events.
+   * @returns a boolean
+   */
+  public static isAnnotating(
+    evt: Konva.KonvaEventObject<PointerEvent | MouseEvent | KeyboardEvent>,
+  ): boolean {
+    return StateManager.currentTool === Tool.Select && evt.evt.ctrlKey;
+  }
+
+  /** Creates a selection box. */
+  public static startSelectBox(start: Vector2d) {
+    StateManager._selectionBoxStart = start;
+    StateManager._stage?.setDraggable(false);
+  }
+
+  /**
+   * Deletes and cleans up the selection box.
+   */
+  public static interruptSelectBox() {
+    StateManager._selectionBoxStart = null;
+    StateManager._stage?.setDraggable(true);
+    StateManager.drawConcepts();
+  }
+
+  /**
+   * Completes a selection box.
+   */
+  public static completeSelectBox(evt: KonvaEventObject<PointerEvent>) {
+    if (!evt.evt.shiftKey) {
+      StateManager.deselectAllObjects();
+    }
+    const [min_x, min_y, max_x, max_y] = this.getSelectBoxBounds();
+    const selectedNodes: NodeWrapper[] = StateManager._nodeWrappers.filter(
+      (node: NodeWrapper) => {
+        const x = node.nodeGroup.getPosition().x;
+        const y = node.nodeGroup.getPosition().y;
+        return min_x <= x && min_y <= y && max_x >= x && max_y >= y;
+      },
+    );
+    selectedNodes.forEach((node1: NodeWrapper) => {
+      StateManager.selectObject(node1);
+      /* I am not sure if we should select transitons, but incase we want to add it, the code is right here
+      selectedNodes.forEach((node2: NodeWrapper) => {
+        const transition = StateManager.transitions.find((t) =>
+          (t.sourceNode.id === node1.id && t.destNode.id === node2.id)
+        );
+        if (transition !== undefined) StateManager.selectObject(transition);
+      })
+      */
+    });
+    StateManager.interruptSelectBox();
+  }
+
+  /**
+   * Returns the bounds of the selection box. returns null if there isn't one.
+   * @returns [min_x,min_y,max_x,max_y] or null
+   */
+  public static getSelectBoxBounds(): null | [number, number, number, number] {
+    if (!StateManager.isSelectionBoxActive()) return null;
+
+    const corner1: Vector2d = StateManager.toStageSpace(
+      StateManager._selectionBoxStart,
+    );
+    let x_min = corner1.x;
+    let y_min = corner1.y;
+
+    const corner2: Vector2d = StateManager.toStageSpace(
+      StateManager._stage?.getPointerPosition(),
+    );
+    const x_other = corner2.x;
+    const y_other = corner2.y;
+
+    let x_max: number;
+    let y_max: number;
+
+    if (x_min > x_other) {
+      x_max = x_min;
+      x_min = x_other;
+    } else {
+      x_max = x_other;
+    }
+    if (y_min > y_other) {
+      y_max = y_min;
+      y_min = y_other;
+    } else {
+      y_max = y_other;
+    }
+    return [x_min, y_min, x_max, y_max];
+  }
+
+  /**
+   * Called when the mouse button is depressed
+   */
+  private static onPointerDown(evt: Konva.KonvaEventObject<PointerEvent>) {
+    if (StateManager.isAnnotating(evt)) {
+      StateManager.startSelectBox(StateManager._stage?.pointerPos);
+    }
+  }
+
+  /**
+   * Called when the mouse pointer is moved
+   */
+  private static onPointerMove(evt: Konva.KonvaEventObject<PointerEvent>) {
+    if (!evt.evt.ctrlKey) {
+      StateManager.interruptSelectBox();
+    }
+    StateManager.drawConcepts();
+  }
+
+  /** Called when the mouse is released. Note: this should always occur right before onClick().  */
+  private static onPointerUp(evt: KonvaEventObject<PointerEvent>) {
+    if (StateManager.isSelectionBoxActive()) {
+      StateManager.completeSelectBox(evt);
+    }
+  }
+
+  /** Draw temporary annotations. */
+  private static drawConcepts() {
+    StateManager._conceptLayer?.destroyChildren();
+    if (StateManager.isSelectionBoxActive()) {
+      const [min_x, min_y, max_x, max_y] = StateManager.getSelectBoxBounds();
+      StateManager._conceptLayer?.add(
+        new Konva.Rect({
+          x: min_x,
+          y: min_y,
+          fill: this.colorScheme.selectedNodeStrokeColor,
+          opacity: 0.5,
+          width: max_x - min_x,
+          height: max_y - min_y,
+        }),
+      );
+    }
+    StateManager._conceptLayer?.batchDraw();
+  }
+
   /** Called when the user pans the view. */
   private static onDragMove(evt: Konva.KonvaEventObject<MouseEvent>) {
     StateManager.drawGrid();
@@ -499,11 +655,13 @@ export default class StateManager {
 
   /** Called when the user clicks on the background. */
   private static onClick(evt: Konva.KonvaEventObject<MouseEvent>) {
-    let thingUnderMouse = StateManager._stage.getIntersection(
-      StateManager._stage.getPointerPosition(),
-    );
-    if (!thingUnderMouse && !evt.evt.shiftKey) {
-      StateManager.deselectAllObjects();
+    if (!StateManager.isAnnotating(evt)) {
+      let thingUnderMouse = StateManager._stage.getIntersection(
+        StateManager._stage.getPointerPosition(),
+      );
+      if (!thingUnderMouse && !evt.evt.shiftKey) {
+        StateManager.deselectAllObjects();
+      }
     }
   }
 
