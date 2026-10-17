@@ -73,7 +73,7 @@ export default function TestCasesPanel() {
     } else if (res === false) {
       return (
         <IconContext.Provider value={{ size: "1.5em" }}>
-          <BsXCircleFill className="min-h-full mr-2 text-red-500 dark:text-red-700 text-lg" />
+          <BsXCircleFill className="min-h-full mr-2 text-red-500 dark:text-red-400 text-lg" />
         </IconContext.Provider>
       );
     }
