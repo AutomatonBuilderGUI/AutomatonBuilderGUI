@@ -416,7 +416,8 @@ export default class NodeWrapper extends SelectableObject {
     // No dragging when in state or comment mode!
     if (
       StateManager.currentTool === Tool.States ||
-      StateManager.currentTool === Tool.Comment
+      StateManager.currentTool === Tool.Comment ||
+      StateManager.isAnnotating(ev)
     ) {
       this.nodeGroup.stopDrag();
     } else if (StateManager.currentTool === Tool.Transitions) {
