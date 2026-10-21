@@ -7,6 +7,8 @@ import { ChangeEvent } from "react";
 import {
   BsCursor,
   BsCursorFill,
+  BsPip,
+  BsPipFill,
   BsDownload,
   BsNodePlus,
   BsNodePlusFill,
@@ -176,6 +178,16 @@ export default function Toolbox(props: React.PropsWithChildren<ToolboxProps>) {
             ) : (
               <BsCursor />
             )}
+          </div>
+        </ToolButton>
+        <ToolButton
+          tool={Tool.SelectBox}
+          setCurrentTool={props.setCurrentTool}
+          currentTool={props.currentTool}
+          title="Selection Box [B]"
+        >
+          <div className="flex flex-row items-center place-content-center">
+            {props.currentTool === Tool.SelectBox ? <BsPipFill /> : <BsPip />}
           </div>
         </ToolButton>
         <ToolButton

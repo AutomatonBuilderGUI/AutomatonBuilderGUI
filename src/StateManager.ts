@@ -519,11 +519,12 @@ export default class StateManager {
   public static isAnnotating(
     evt: Konva.KonvaEventObject<PointerEvent | MouseEvent | KeyboardEvent>,
   ): boolean {
-    return StateManager.currentTool === Tool.Select && evt.evt.ctrlKey;
+    return StateManager.currentTool === Tool.SelectBox;
   }
 
   /** Creates a selection box. */
   public static startSelectBox(start: Vector2d) {
+    console.log("box started");
     StateManager._selectionBoxStart = start;
     StateManager._stage?.setDraggable(false);
   }
@@ -532,6 +533,7 @@ export default class StateManager {
    * Deletes and cleans up the selection box.
    */
   public static interruptSelectBox() {
+    console.log("box interupted");
     StateManager._selectionBoxStart = null;
     StateManager._stage?.setDraggable(true);
     StateManager.drawConcepts();
@@ -541,6 +543,7 @@ export default class StateManager {
    * Completes a selection box.
    */
   public static completeSelectBox(evt: KonvaEventObject<PointerEvent>) {
+    console.log("box completed");
     if (!evt.evt.shiftKey) {
       StateManager.deselectAllObjects();
     }
@@ -616,9 +619,6 @@ export default class StateManager {
    * Called when the mouse pointer is moved
    */
   private static onPointerMove(evt: Konva.KonvaEventObject<PointerEvent>) {
-    if (!evt.evt.ctrlKey) {
-      StateManager.interruptSelectBox();
-    }
     StateManager.drawConcepts();
   }
 

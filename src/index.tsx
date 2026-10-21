@@ -78,6 +78,8 @@ function App({ defaultDarkMode }: { defaultDarkMode: boolean }) {
         setCurrentTool(Tool.Select);
       } else if (ev.code === "KeyR") {
         setCurrentTool(Tool.Comment);
+      } else if (ev.code === "KeyB") {
+        setCurrentTool(Tool.SelectBox);
       }
     });
   }, []);
