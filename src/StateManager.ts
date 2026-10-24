@@ -51,7 +51,7 @@ export default class StateManager {
   private static _resizeComment: CommentRegion | null = null;
 
   /**
-   * Normally, this is null. However, when the selection box is being used, this instead stores the corner where the user started dragging.
+   * When the selection box is being used, this stores the corner where the user started dragging.
    */
   private static _selectionBoxStart: Vector2d | null = null;
 
@@ -80,7 +80,7 @@ export default class StateManager {
   private static _startStateLine: Konva.Arrow | null = null;
 
   /** The layer of the Konva stage that draws the selection box (and perhaps other temporary constructs)*/
-  private static _conceptLayer: Konva.Layer | null = null;
+  private static _selectBoxLayer: Konva.Layer | null = null;
 
   /** The layer of the Konva stage where nodes are drawn. */
   private static _nodeLayer: Konva.Layer | null = null;
@@ -216,7 +216,7 @@ export default class StateManager {
     this._stage.on("pointermove", StateManager.onPointerMove);
     this._stage.on("pointerup", StateManager.onPointerUp);
 
-    this._conceptLayer = new Konva.Layer();
+    this._selectBoxLayer = new Konva.Layer();
     this._nodeLayer = new Konva.Layer();
     this._transitionLayer = new Konva.Layer();
     this._gridLayer = new Konva.Layer();
@@ -263,7 +263,7 @@ export default class StateManager {
     this._stage.add(this._commentLayer);
     this._stage.add(this._transitionLayer);
     this._stage.add(this._nodeLayer);
-    this._stage.add(this._conceptLayer);
+    this._stage.add(this._selectBoxLayer);
 
     this._stage.on("mousemove", () => {
       if (StateManager._resizeComment == null) {
@@ -507,19 +507,8 @@ export default class StateManager {
   }
 
   /** Returns true if the selection box is active. */
-  public static isSelectionBoxActive(): boolean {
+  public static isSelectBoxActive(): boolean {
     return StateManager._selectionBoxStart != null;
-  }
-
-  /**
-   * Returns true if clicking and dragging would create a selection box or some other temporary construct. In general, this should block most click or drag actions.
-   * @param evt Whatever event is occuring. Should accept most events.
-   * @returns a boolean
-   */
-  public static isAnnotating(
-    evt: Konva.KonvaEventObject<PointerEvent | MouseEvent | KeyboardEvent>,
-  ): boolean {
-    return StateManager.currentTool === Tool.SelectBox;
   }
 
   /** Creates a selection box. */
@@ -531,14 +520,14 @@ export default class StateManager {
   /**
    * Deletes and cleans up the selection box.
    */
-  public static interruptSelectBox() {
+  public static killSelectBox() {
     StateManager._selectionBoxStart = null;
     StateManager._stage?.setDraggable(true);
-    StateManager.drawConcepts();
+    StateManager.drawSelectionBox();
   }
 
   /**
-   * Completes a selection box.
+   * Selects all the nodes inside the box and kills the selection box.
    */
   public static completeSelectBox(evt: KonvaEventObject<PointerEvent>) {
     if (!evt.evt.shiftKey) {
@@ -563,7 +552,7 @@ export default class StateManager {
       })
       */
     });
-    StateManager.interruptSelectBox();
+    StateManager.killSelectBox();
   }
 
   /**
@@ -571,7 +560,7 @@ export default class StateManager {
    * @returns [min_x,min_y,max_x,max_y] or null
    */
   public static getSelectBoxBounds(): null | [number, number, number, number] {
-    if (!StateManager.isSelectionBoxActive()) return null;
+    if (!StateManager.isSelectBoxActive()) return null;
 
     const corner1: Vector2d = StateManager.toStageSpace(
       StateManager._selectionBoxStart,
@@ -607,7 +596,7 @@ export default class StateManager {
    * Called when the mouse button is depressed
    */
   private static onPointerDown(evt: Konva.KonvaEventObject<PointerEvent>) {
-    if (StateManager.isAnnotating(evt)) {
+    if (StateManager.currentTool === Tool.SelectBox) {
       StateManager.startSelectBox(StateManager._stage?.pointerPos);
     }
   }
@@ -617,27 +606,27 @@ export default class StateManager {
    */
   private static onPointerMove(evt: Konva.KonvaEventObject<PointerEvent>) {
     if (
-      !StateManager.isAnnotating(evt) &&
-      StateManager.isSelectionBoxActive()
+      StateManager.currentTool !== Tool.SelectBox &&
+      StateManager.isSelectBoxActive()
     ) {
-      StateManager.interruptSelectBox();
+      StateManager.killSelectBox();
     }
-    StateManager.drawConcepts();
+    StateManager.drawSelectionBox();
   }
 
   /** Called when the mouse is released. Note: this should always occur right before onClick().  */
   private static onPointerUp(evt: KonvaEventObject<PointerEvent>) {
-    if (StateManager.isSelectionBoxActive()) {
+    if (StateManager.isSelectBoxActive()) {
       StateManager.completeSelectBox(evt);
     }
   }
 
   /** Draw temporary annotations. */
-  private static drawConcepts() {
-    StateManager._conceptLayer?.destroyChildren();
-    if (StateManager.isSelectionBoxActive()) {
+  private static drawSelectionBox() {
+    StateManager._selectBoxLayer?.destroyChildren();
+    if (StateManager.isSelectBoxActive()) {
       const [min_x, min_y, max_x, max_y] = StateManager.getSelectBoxBounds();
-      StateManager._conceptLayer?.add(
+      StateManager._selectBoxLayer?.add(
         new Konva.Rect({
           x: min_x,
           y: min_y,
@@ -648,7 +637,7 @@ export default class StateManager {
         }),
       );
     }
-    StateManager._conceptLayer?.batchDraw();
+    StateManager._selectBoxLayer?.batchDraw();
   }
 
   /** Called when the user pans the view. */
@@ -658,13 +647,14 @@ export default class StateManager {
 
   /** Called when the user clicks on the background. */
   private static onClick(evt: Konva.KonvaEventObject<MouseEvent>) {
-    if (!StateManager.isAnnotating(evt)) {
-      let thingUnderMouse = StateManager._stage.getIntersection(
-        StateManager._stage.getPointerPosition(),
-      );
-      if (!thingUnderMouse && !evt.evt.shiftKey) {
-        StateManager.deselectAllObjects();
-      }
+    if (StateManager.currentTool === Tool.SelectBox) {
+      return;
+    }
+    let thingUnderMouse = StateManager._stage.getIntersection(
+      StateManager._stage.getPointerPosition(),
+    );
+    if (!thingUnderMouse && !evt.evt.shiftKey) {
+      StateManager.deselectAllObjects();
     }
   }
 

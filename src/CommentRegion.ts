@@ -260,10 +260,7 @@ export default class CommentRegion extends SelectableObject {
     this.lastPos = this.nodeGroup.position();
     this.lastDragPos = this.nodeGroup.position();
 
-    if (
-      StateManager.currentTool !== Tool.Select ||
-      StateManager.isAnnotating(ev)
-    ) {
+    if (StateManager.currentTool !== Tool.Select) {
       // will also call onDragEnd, with evt === undefined
       this.nodeGroup.stopDrag();
       return;

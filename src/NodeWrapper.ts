@@ -417,7 +417,7 @@ export default class NodeWrapper extends SelectableObject {
     if (
       StateManager.currentTool === Tool.States ||
       StateManager.currentTool === Tool.Comment ||
-      StateManager.isAnnotating(ev)
+      StateManager.currentTool === Tool.SelectBox
     ) {
       this.nodeGroup.stopDrag();
     } else if (StateManager.currentTool === Tool.Transitions) {
