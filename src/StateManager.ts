@@ -1770,8 +1770,9 @@ export default class StateManager {
     }
 
     const forward = (data: SelectionData) => {
+      StateManager._selectedObjects = data.newSelection;
       StateManager.setSelectedObjects(data.newSelection);
-      StateManager._selectedObjects = data.oldSelection;
+
       data.oldSelection.forEach((e: SelectableObject) => {
         e.deselect();
       });
