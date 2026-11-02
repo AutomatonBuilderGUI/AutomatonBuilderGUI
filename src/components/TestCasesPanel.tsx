@@ -28,6 +28,28 @@ export default function TestCasesPanel() {
     testsFileInputRef.current?.click(); // Programmatically click the hidden file input
   };
 
+  const handleExportTestsClick = () => {
+    const exportedTests = {
+      tests: tests.map((test) => ({
+        string: test.string,
+        expectedAccept: test.expectedAccept,
+      })),
+    };
+
+    const json = JSON.stringify(exportedTests, null, 2);
+    const blob = new Blob([json], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "automaton-tests.json";
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  };
+
   const handleRunAllTestsClick = () => {
     if (StateManager.checkDebug()) {
       showError(
@@ -155,6 +177,15 @@ export default function TestCasesPanel() {
         </div>
         <div className="max-h-48 overflow-y-auto">{displayTest}</div>
         <div className="flex flex-col">
+          <button
+            className="rounded-full p-2 m-1 bg-blue-600 dark:bg-blue-800 text-white text-center disabled:opacity-50 disabled:cursor-not-allowed"
+            onClick={handleExportTestsClick}
+            disabled={tests.length === 0}
+            title="Export all tests to JSON"
+          >
+            Export Tests
+          </button>
+
           <button
             className="rounded-full p-2 m-1 bg-blue-600 dark:bg-blue-800 text-white text-center"
             onClick={handleRunAllTestsClick}
