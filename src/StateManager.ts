@@ -530,9 +530,6 @@ export default class StateManager {
    * Selects all the nodes inside the box and kills the selection box.
    */
   public static completeSelectBox(evt: KonvaEventObject<PointerEvent>) {
-    if (!evt.evt.shiftKey) {
-      StateManager.deselectAllObjects();
-    }
     const [min_x, min_y, max_x, max_y] = this.getSelectBoxBounds();
     const selectedNodes: NodeWrapper[] = StateManager._nodeWrappers.filter(
       (node: NodeWrapper) => {
@@ -541,17 +538,11 @@ export default class StateManager {
         return min_x <= x && min_y <= y && max_x >= x && max_y >= y;
       },
     );
-    selectedNodes.forEach((node1: NodeWrapper) => {
-      StateManager.selectObject(node1);
-      /* I am not sure if we should select transitons, but incase we want to add it, the code is right here
-      selectedNodes.forEach((node2: NodeWrapper) => {
-        const transition = StateManager.transitions.find((t) =>
-          (t.sourceNode.id === node1.id && t.destNode.id === node2.id)
-        );
-        if (transition !== undefined) StateManager.selectObject(transition);
-      })
-      */
-    });
+    if (!evt.evt.shiftKey) {
+      StateManager.setSelection(selectedNodes);
+    } else {
+      StateManager.addToSelection(selectedNodes);
+    }
     StateManager.killSelectBox();
   }
 
