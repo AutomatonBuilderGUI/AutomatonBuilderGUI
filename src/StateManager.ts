@@ -2491,7 +2491,8 @@ export default class StateManager {
   }
 
   /**
-   * Attempts to load an automaton JSON from a user's file.
+   * Attempts to load a JSON file from a given file.
+   * (Primarily used for loading automata and test suites.)
    * @param ev
    */
   public static uploadJSON(ev: ChangeEvent<HTMLInputElement>) {
