@@ -27,6 +27,11 @@ export default class StateManager {
    */
   static _nextStateId = 0;
 
+  /**
+   * Stores a list of the objects that were selected when debug mode was enabled.
+   */
+  static _selectedBeforeDebug: SelectableObject[] = [];
+
   /** Returns the current start node for the automaton. */
   public static get startNode(): NodeWrapper | null {
     return StateManager._startNode;
@@ -2373,6 +2378,7 @@ export default class StateManager {
   }
   public static async debugMachine(path: any[]) {
     let LegalMoveFlag = 1;
+    StateManager._selectedBeforeDebug = StateManager.selectedObjects;
     StateManager.deselectAllObjects();
     let pos = 0;
 
@@ -2396,6 +2402,7 @@ export default class StateManager {
       LegalMoveFlag = 1;
       if (moveVal == StateManager.debugOptions.KillDebug) {
         StateManager.deselectAllObjects();
+        StateManager._selectedBeforeDebug.forEach(StateManager.selectObject); //reset selected objects to how it was before debug mode.
         break;
       } else {
         pos += moveVal;
