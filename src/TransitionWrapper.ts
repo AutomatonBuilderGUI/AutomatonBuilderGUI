@@ -109,7 +109,7 @@ export default class TransitionWrapper extends SelectableObject {
         context.beginPath();
         const originalStrokeWidth = shape.strokeWidth();
         //Hitbox area
-        shape.strokeWidth(12);
+        shape.strokeWidth(20);
         (shape as any)._sceneFunc(context);
         //set strokeWidth back for drawing purposes
         shape.strokeWidth(originalStrokeWidth);
