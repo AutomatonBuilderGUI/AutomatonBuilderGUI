@@ -3193,9 +3193,9 @@ class PasteActionData extends ActionData {
   /** The objects selected before the paste */
   public originalSelected: SelectableObject[] = [];
 
-  constructor(olds: SelectableObject[]) {
+  constructor(originalSelected: SelectableObject[]) {
     super();
-    this.originalSelected = olds;
+    this.originalSelected = originalSelected;
   }
 }
 
