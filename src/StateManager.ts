@@ -1245,7 +1245,7 @@ export default class StateManager {
         }
       });
 
-      data.oldSelected.forEach(StateManager.selectObject);
+      data.originalSelected.forEach(StateManager.selectObject);
 
       StateManager._nodeLayer?.draw();
       StateManager._transitionLayer?.draw();
@@ -1296,14 +1296,13 @@ export default class StateManager {
     ];
 
     // Create an action to remove the selected objects
-    let cutData = new CutActionData();
+    let cutData = new CutActionData(this.selectedObjects);
 
     cutData.nodes = selectedNodes;
     cutData.transitions = [
       ...selectedTransitions,
       ...transitionsBetweenSelectedNodes,
     ];
-    cutData.preSelected = this.selectedObjects;
 
     // Save start node if it's being cut
     cutData.wasStartNode = cutData.nodes.includes(StateManager.startNode);
@@ -1360,7 +1359,7 @@ export default class StateManager {
       StateManager._nodeLayer?.draw();
       StateManager._transitionLayer?.draw();
       StateManager.deselectAllObjects();
-      data.preSelected.forEach(StateManager.selectObject);
+      data.originalSelected.forEach(StateManager.selectObject);
       StateManager.updateTransitions();
     };
 
@@ -1512,7 +1511,7 @@ export default class StateManager {
   public static addTransition(source: NodeWrapper, dest: NodeWrapper) {
     if (this.debugActive) return;
     const newTransition = new TransitionWrapper(source, dest);
-    const oldSelected: SelectableObject[] = StateManager.selectedObjects;
+    const originalSelected: SelectableObject[] = StateManager.selectedObjects;
 
     let addTransitionForward = (data: AddTransitionActionData) => {
       StateManager._transitionWrappers.push(data.transition);
@@ -1527,7 +1526,7 @@ export default class StateManager {
         StateManager._transitionWrappers.filter((i) => i !== data.transition);
       data.transition.konvaGroup.remove();
       StateManager.deselectAllObjects();
-      data.oldSelect.forEach(StateManager.selectObject);
+      data.originalSelected.forEach(StateManager.selectObject);
       StateManager.updateTransitions();
     };
 
@@ -1536,7 +1535,7 @@ export default class StateManager {
       `Add Transition from "${source.labelText}" to "${dest.labelText}"`,
       addTransitionForward,
       addTransitionBackward,
-      { transition: newTransition, oldSelect: oldSelected },
+      { transition: newTransition, originalSelected: originalSelected },
     );
     UndoRedoManager.pushAction(addTransitionAction);
   }
@@ -1916,7 +1915,7 @@ export default class StateManager {
       return; //if the selection is the same, we don't do anything.
     }
 
-    const forward = (data: SelectionData) => {
+    const forward = (data: ChangeSelectionActionData) => {
       StateManager._selectedObjects = data.newSelection;
       StateManager.setSelectedObjects(data.newSelection);
 
@@ -1927,7 +1926,7 @@ export default class StateManager {
         e.select();
       });
     };
-    const backward = (data: SelectionData) => {
+    const backward = (data: ChangeSelectionActionData) => {
       StateManager.setSelectedObjects(data.oldSelection);
       StateManager._selectedObjects = data.oldSelection;
       data.newSelection.forEach((e: SelectableObject) => {
@@ -3081,9 +3080,9 @@ class RemoveNodeActionDataMulti extends ActionData {
   /** Whether any of the nodes removed were the start node. */
   public wasStartNode: boolean = false;
 
-  constructor(orSel: SelectableObject[]) {
+  constructor(originalSelected: SelectableObject[]) {
     super();
-    this.originalSelected = orSel;
+    this.originalSelected = originalSelected;
   }
 }
 
@@ -3135,7 +3134,7 @@ class AddTransitionActionData extends ActionData {
   public transition: TransitionWrapper;
 
   /** Objects that were selected before the transition was added */
-  public oldSelect: SelectableObject[];
+  public originalSelected: SelectableObject[];
 }
 
 /** Holds the data associated with a "remove transition" action. */
@@ -3192,11 +3191,11 @@ class PasteActionData extends ActionData {
   public transitions: TransitionWrapper[] = [];
 
   /** The objects selected before the paste */
-  public oldSelected: SelectableObject[] = [];
+  public originalSelected: SelectableObject[] = [];
 
   constructor(olds: SelectableObject[]) {
     super();
-    this.oldSelected = olds;
+    this.originalSelected = olds;
   }
 }
 
@@ -3211,7 +3210,12 @@ class CutActionData extends ActionData {
   /** Whether any of the nodes removed were the start node. */
   public wasStartNode: boolean = false;
 
-  public preSelected: SelectableObject[] = [];
+  public originalSelected: SelectableObject[] = [];
+
+  constructor(originalSelected: SelectableObject[]) {
+    super();
+    this.originalSelected = originalSelected;
+  }
 }
 
 /** Holds the data associated with a "create comment" action. */
@@ -3270,7 +3274,7 @@ class ResizeCommentActionData extends ActionData {
 }
 
 /** Holds the data associated with a "change selection" action */
-class SelectionData extends ActionData {
+class ChangeSelectionActionData extends ActionData {
   /** The old selection set before the action was taken */
   public oldSelection: SelectableObject[] = [];
 
