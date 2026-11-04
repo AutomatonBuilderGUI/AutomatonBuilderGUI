@@ -1078,6 +1078,7 @@ export default class StateManager {
    */
   private static onKeyDown(ev: KeyboardEvent) {
     //based on the ignore shortcuts implementation in index.tsx
+
     const n = document.activeElement.nodeName;
     if (n === "INPUT" || n === "TEXTAREA") {
       return;
@@ -1091,29 +1092,35 @@ export default class StateManager {
     // https://stackoverflow.com/a/77837006
     if ((ev.metaKey || ev.ctrlKey) && ev.key == "z" && !this.debugActive) {
       ev.preventDefault();
-
-      if (ev.shiftKey) {
-        UndoRedoManager.redo();
-      } else {
-        UndoRedoManager.undo();
-      }
+      UndoRedoManager.undo();
       return;
     }
 
-    // **Handle Ctrl+C (Copy)**
+    // ** handle Ctrl+y and Ctrl+Z (redo)**
+    if (
+      (ev.metaKey || ev.ctrlKey) &&
+      (ev.key == "Z" || ev.key == "y") &&
+      !this.debugActive
+    ) {
+      ev.preventDefault();
+      UndoRedoManager.redo();
+      return;
+    }
+
+    // **Handle Ctrl+c (Copy)**
     if ((ev.metaKey || ev.ctrlKey) && ev.key === "c" && !this.debugActive) {
       ev.preventDefault();
       StateManager.copySelectedObjects();
       return;
     }
 
-    // **Handle Ctrl+X (Cut)**
+    // **Handle Ctrl+x (Cut)**
     if ((ev.metaKey || ev.ctrlKey) && ev.key === "x" && !this.debugActive) {
       ev.preventDefault();
       StateManager.cutSelectedObjects();
       return;
     }
-    // **Handle Ctrl+V (Paste)**
+    // **Handle Ctrl+v (Paste)**
     if ((ev.metaKey || ev.ctrlKey) && ev.key === "v" && !this.debugActive) {
       ev.preventDefault();
       StateManager.pasteClipboardObjects();
