@@ -18,6 +18,7 @@ import {
   BsWrench,
 } from "react-icons/bs";
 import { FiveTuplesDisplay } from "./components/FiveTuples";
+import { BiUndo } from "react-icons/bi";
 import TestStringWindow from "./components/TestStringWindow";
 import InformationBox, {
   InformationBoxType,
@@ -80,6 +81,8 @@ function App({ defaultDarkMode }: { defaultDarkMode: boolean }) {
         setCurrentTool(Tool.Select);
       } else if (ev.code === "KeyR") {
         setCurrentTool(Tool.Comment);
+      } else if (ev.code === "KeyB") {
+        setCurrentTool(Tool.SelectBox);
       }
     });
   }, []);
@@ -187,6 +190,12 @@ function App({ defaultDarkMode }: { defaultDarkMode: boolean }) {
   useEffect(() => {
     StateManager.useDarkMode = useDarkMode;
   }, [useDarkMode]);
+
+  // React state and enable/disable functions for action stack.
+  const [actionStackVisible, setActionStackVisible] = useState(false);
+  const toggleActionStack = () => {
+    setActionStackVisible(!actionStackVisible);
+  };
 
   // Create a DFA from the current state, and get the errors from it
   let dfa = StateManager.dfa;
@@ -312,6 +321,12 @@ function App({ defaultDarkMode }: { defaultDarkMode: boolean }) {
               >
                 <div className="flex flex-row items-center place-content-center mx-2">
                   <BsWrench className="mr-1" />5 tuple definition
+                className="rounded-full p-2 m-1 mx-2 block bg-blue-500 text-white text-center"
+                onClick={toggleActionStack}
+              >
+                <div className="flex flex-row items-center place-content-center mx-2">
+                  <BiUndo size={24} className="mr-1" />
+                  Action Stack
                 </div>
               </button>
             </div>
@@ -341,7 +356,13 @@ function App({ defaultDarkMode }: { defaultDarkMode: boolean }) {
         {/*Separates the left and right panels */}
         <div className="grow"></div>
 
-        <FloatingPanel heightPolicy="screen" style={{ width: "250px" }}>
+        <FloatingPanel
+          heightPolicy="screen"
+          style={{
+            width: "250px",
+            visibility: actionStackVisible ? "visible" : "hidden",
+          }}
+        >
           <DetailsBox_ActionStackViewer />
         </FloatingPanel>
       </div>

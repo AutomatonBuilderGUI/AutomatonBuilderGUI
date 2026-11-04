@@ -15,4 +15,5 @@ export enum Tool {
   SetAccept,
   Select,
   Comment,
+  SelectBox,
 }
