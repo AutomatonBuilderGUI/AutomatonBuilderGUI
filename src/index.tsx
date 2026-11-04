@@ -15,7 +15,9 @@ import {
   BsGithub,
   BsClock,
   BsLink,
+  BsWrench,
 } from "react-icons/bs";
+import { FiveTuplesDisplay } from "./components/FiveTuples";
 import TestStringWindow from "./components/TestStringWindow";
 import InformationBox, {
   InformationBoxType,
@@ -171,6 +173,11 @@ function App({ defaultDarkMode }: { defaultDarkMode: boolean }) {
   const closeGitWindow = () => {
     setconfigGitWindowOpen(false);
   };
+  // 5 tuple display tab
+  const [showTupleTab, setTupleTab] = useState(false);
+  const toggleTupleTab = () => {
+    setTupleTab(!showTupleTab);
+  };
 
   // React state and enable/disable functions for dark mode.
   const [useDarkMode, setDarkMode] = useState(defaultDarkMode);
@@ -295,6 +302,18 @@ function App({ defaultDarkMode }: { defaultDarkMode: boolean }) {
                   Dark Mode
                 </div>
               </button>
+              <button
+                className="rounded-full p-2 m-1 mx-2 block bg-gray-500 text-white text-center disabled:opacity-50 disabled:cursor-not-allowed"
+                onClick={toggleTupleTab}
+                disabled={dfaErrors.length != 0}
+                title={
+                  dfaErrors.length != 0 ? "Machine not complete" : undefined
+                }
+              >
+                <div className="flex flex-row items-center place-content-center mx-2">
+                  <BsWrench className="mr-1" />5 tuple definition
+                </div>
+              </button>
             </div>
             <div className="flex flex-row absolute bottom-6 items-center place-content-center mx-2">
               <BsGithub className="mr-1" />
@@ -362,6 +381,14 @@ function App({ defaultDarkMode }: { defaultDarkMode: boolean }) {
                 </li>
               </BuildGitInfo>
             </ul>
+          </ClosableModalWindow>
+        )}
+      </div>
+
+      <div>
+        {showTupleTab && (
+          <ClosableModalWindow title="Five tuples" close={toggleTupleTab}>
+            <FiveTuplesDisplay />
           </ClosableModalWindow>
         )}
       </div>
