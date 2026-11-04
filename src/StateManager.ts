@@ -70,6 +70,8 @@ export default class StateManager {
   /** Keeps track of the current tool being used by the user. */
   private static _currentTool: Tool = Tool.States;
 
+  private static _lockTool: boolean = false;
+
   /** The stage, or canvas, where the state machine is drawn. */
   private static _stage: Konva.Stage | null = null;
 
@@ -427,6 +429,20 @@ export default class StateManager {
       height: maxY - minY,
     };
   }
+  //lock tool-changing
+  public static lockTool() {
+    StateManager._lockTool = true;
+  }
+
+  //unlock tool-changing
+  public static unlockTool() {
+    StateManager._lockTool = false;
+  }
+
+  //If true, the tool can't be switched.
+  public static get toolsAreUnlocked(): boolean {
+    return !StateManager._lockTool;
+  }
 
   public static exportAutomatonToImage() {
     if (!StateManager._stage) {
@@ -498,6 +514,7 @@ export default class StateManager {
 
   /** Sets the current tool. */
   public static set currentTool(tool: Tool) {
+    if (!StateManager.toolsAreUnlocked) return;
     StateManager._currentTool = tool;
   }
 
@@ -513,6 +530,7 @@ export default class StateManager {
 
   /** Creates a selection box. */
   public static startSelectBox(start: Vector2d) {
+    StateManager.lockTool();
     StateManager._selectBoxStart = start;
     StateManager._stage?.setDraggable(false);
   }
@@ -521,6 +539,7 @@ export default class StateManager {
    * Deletes and cleans up the selection box.
    */
   public static killSelectBox() {
+    StateManager.unlockTool();
     StateManager._selectBoxStart = null;
     StateManager._stage?.setDraggable(true);
     StateManager.drawSelectBox();
