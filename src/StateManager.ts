@@ -1096,7 +1096,7 @@ export default class StateManager {
       return;
     }
 
-    // ** handle Ctrl+y and Ctrl+Z (redo)**
+    // ** handle Ctrl+Y and Ctrl+Shift+Z (redo)**
     if (
       (ev.metaKey || ev.ctrlKey) &&
       (ev.key == "Z" || ev.key == "y") &&
@@ -1107,20 +1107,20 @@ export default class StateManager {
       return;
     }
 
-    // **Handle Ctrl+c (Copy)**
+    // **Handle Ctrl+C (Copy)**
     if ((ev.metaKey || ev.ctrlKey) && ev.key === "c" && !this.debugActive) {
       ev.preventDefault();
       StateManager.copySelectedObjects();
       return;
     }
 
-    // **Handle Ctrl+x (Cut)**
+    // **Handle Ctrl+X (Cut)**
     if ((ev.metaKey || ev.ctrlKey) && ev.key === "x" && !this.debugActive) {
       ev.preventDefault();
       StateManager.cutSelectedObjects();
       return;
     }
-    // **Handle Ctrl+v (Paste)**
+    // **Handle Ctrl+V (Paste)**
     if ((ev.metaKey || ev.ctrlKey) && ev.key === "v" && !this.debugActive) {
       ev.preventDefault();
       StateManager.pasteClipboardObjects();
