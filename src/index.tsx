@@ -70,17 +70,18 @@ function App({ defaultDarkMode }: { defaultDarkMode: boolean }) {
       if (n == "TEXTAREA" || n == "INPUT") {
         return;
       }
-
-      if (ev.code === "KeyA") {
-        setCurrentTool(Tool.States);
-      } else if (ev.code === "KeyT") {
-        setCurrentTool(Tool.Transitions);
-      } else if (ev.code === "KeyS") {
-        setCurrentTool(Tool.Select);
-      } else if (ev.code === "KeyR") {
-        setCurrentTool(Tool.Comment);
-      } else if (ev.code === "KeyB") {
-        setCurrentTool(Tool.SelectBox);
+      if (StateManager.toolsAreUnlocked) {
+        if (ev.code === "KeyA") {
+          setCurrentTool(Tool.States);
+        } else if (ev.code === "KeyT") {
+          setCurrentTool(Tool.Transitions);
+        } else if (ev.code === "KeyS") {
+          setCurrentTool(Tool.Select);
+        } else if (ev.code === "KeyR") {
+          setCurrentTool(Tool.Comment);
+        } else if (ev.code === "KeyB") {
+          setCurrentTool(Tool.SelectBox);
+        }
       }
     });
   }, []);
