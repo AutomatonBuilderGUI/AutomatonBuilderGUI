@@ -17,7 +17,7 @@ import {
   BsLink,
   BsWrench,
 } from "react-icons/bs";
-import { FiveTuplesDisplay } from "./components/FiveTuples";
+import { FiveTupleDisplay } from "./components/FiveTuple";
 import { BiUndo } from "react-icons/bi";
 import TestStringWindow from "./components/TestStringWindow";
 import InformationBox, {
@@ -314,13 +314,13 @@ function App({ defaultDarkMode }: { defaultDarkMode: boolean }) {
               <button
                 className="rounded-full p-2 m-1 mx-2 block bg-gray-500 text-white text-center disabled:opacity-50 disabled:cursor-not-allowed"
                 onClick={toggleTupleTab}
-                disabled={dfaErrors.length != 0}
-                title={
-                  dfaErrors.length != 0 ? "Machine not complete" : undefined
-                }
               >
                 <div className="flex flex-row items-center place-content-center mx-2">
-                  <BsWrench className="mr-1" />5 tuple definition
+                  <BsWrench className="mr-1" />
+                  5-tuple definition
+                </div>
+              </button>
+              <button
                 className="rounded-full p-2 m-1 mx-2 block bg-blue-500 text-white text-center"
                 onClick={toggleActionStack}
               >
@@ -408,8 +408,8 @@ function App({ defaultDarkMode }: { defaultDarkMode: boolean }) {
 
       <div>
         {showTupleTab && (
-          <ClosableModalWindow title="Five tuples" close={toggleTupleTab}>
-            <FiveTuplesDisplay />
+          <ClosableModalWindow title="5-tuple" close={toggleTupleTab}>
+            <FiveTupleDisplay />
           </ClosableModalWindow>
         )}
       </div>

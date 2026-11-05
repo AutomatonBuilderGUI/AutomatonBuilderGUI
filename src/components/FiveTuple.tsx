@@ -15,11 +15,22 @@ function idToSymbolChar(id: string): string {
   }).symbol;
 }
 
-export function FiveTuplesDisplay() {
+export function FiveTupleDisplay() {
   const data = StateManager.toSerializable();
+
+  if (data.states.length == 0) {
+    return (
+      <div className="text-center">
+        <h1 className="font-bold">Machine has no states</h1>
+        <p>Construct a machine to get a 5 tuple definition</p>
+      </div>
+    );
+  }
+
   return (
     <>
-      <div>
+      <div className="text-center">
+        <p>M = (Q, Σ, δ, q_0, F)</p>
         <p>
           Q = {"{"}{" "}
           {data.states.map((d, index) => (
@@ -29,18 +40,6 @@ export function FiveTuplesDisplay() {
             </strong>
           ))}{" "}
           {"}"}
-        </p>
-        <p>
-          F ={" "}
-          {data.acceptStates.map((d) => (
-            <strong key={d}>
-              {
-                data.states.find((value) => {
-                  return d == value.id;
-                }).label
-              }
-            </strong>
-          ))}
         </p>
         <p>
           Σ = {"{"}{" "}
@@ -62,6 +61,20 @@ export function FiveTuplesDisplay() {
             }
           </strong>{" "}
         </p>
+        <p>
+          F ={"{"}{" "}
+          {data.acceptStates.map((d) => (
+            <strong key={d}>
+              {
+                data.states.find((value) => {
+                  return d == value.id;
+                }).label
+              }
+            </strong>
+          ))}
+          {"}"}
+        </p>
+        <h1 className="text-center font-bold underline">δ</h1>
         <TransitionTable />
       </div>
     </>
@@ -114,7 +127,7 @@ function TransitionTable() {
   return (
     <div className="w-full max-w-4xl mx-auto p-4">
       <table className="overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm">
-        <thead className="bg-slate-50 text-xs font-semibold uppercase tracking-wider text-slate-700 border-b border-slate-200">
+        <thead className="bg-slate-50 text-xs font-semibold tracking-wider text-slate-700 border-b border-slate-200">
           <tr>
             <th scope="col" className="px-6 py-4">
               Σ
