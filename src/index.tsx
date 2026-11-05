@@ -70,7 +70,7 @@ function App({ defaultDarkMode }: { defaultDarkMode: boolean }) {
       if (n == "TEXTAREA" || n == "INPUT") {
         return;
       }
-      if (StateManager.toolsAreUnlocked)
+      if (StateManager.toolsAreUnlocked) {
         if (ev.code === "KeyA") {
           setCurrentTool(Tool.States);
         } else if (ev.code === "KeyT") {
@@ -82,6 +82,7 @@ function App({ defaultDarkMode }: { defaultDarkMode: boolean }) {
         } else if (ev.code === "KeyB") {
           setCurrentTool(Tool.SelectBox);
         }
+      }
     });
   }, []);
 
