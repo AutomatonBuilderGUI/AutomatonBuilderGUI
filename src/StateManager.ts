@@ -1530,12 +1530,15 @@ export default class StateManager {
       StateManager.updateTransitions();
     };
 
+    let newData = new AddTransitionActionData(originalSelected);
+    newData.transition = newTransition;
+
     let addTransitionAction = new Action(
       "addTransition",
       `Add Transition from "${source.labelText}" to "${dest.labelText}"`,
       addTransitionForward,
       addTransitionBackward,
-      { transition: newTransition, originalSelected: originalSelected },
+      newData,
     );
     UndoRedoManager.pushAction(addTransitionAction);
   }
@@ -3135,6 +3138,11 @@ class AddTransitionActionData extends ActionData {
 
   /** Objects that were selected before the transition was added */
   public originalSelected: SelectableObject[];
+
+  constructor(originalSelected: SelectableObject[]) {
+    super();
+    this.originalSelected = originalSelected;
+  }
 }
 
 /** Holds the data associated with a "remove transition" action. */
