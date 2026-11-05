@@ -53,6 +53,7 @@ export default class NodeWrapper extends SelectableObject {
 
   private _isErrorState: boolean = false;
   private _isSelected: boolean = false;
+  private _isDebugHighlighted: boolean = false;
 
   /**
    * Whether or not this node is an accepting node.
@@ -281,6 +282,22 @@ export default class NodeWrapper extends SelectableObject {
   /** Marks the node as deselected and updates its appearance accordingly. */
   public deselect() {
     this._isSelected = false;
+    this.updateAppearance();
+  }
+
+  /**
+   * Updates the appearance of the transition to be debug highlighted
+   */
+  public debugHighlight(): void {
+    this._isDebugHighlighted = true;
+    this.updateAppearance();
+  }
+
+  /**
+   * Updates the appearance of the transition to be debug highlighted
+   */
+  public debugUnHighlight(): void {
+    this._isDebugHighlighted = false;
     this.updateAppearance();
   }
 
@@ -626,9 +643,17 @@ export default class NodeWrapper extends SelectableObject {
       this.errorText.visible(true);
     }
 
+    if (this._isDebugHighlighted) {
+      // Selected state appearance
+      // Yellw selection stroke (overrides error stroke)
+      this.nodeBackground.stroke(
+        StateManager.colorScheme.nodeDebugHighlightColor,
+      );
+    }
+
     if (this._isSelected) {
       // Selected state appearance
-      // Blue selection stroke (overrides error stroke)
+      // Blue selection stroke (overrides error stroke and/or highlight stroke)
       this.nodeBackground.stroke(
         StateManager.colorScheme.selectedNodeStrokeColor,
       );

@@ -20,6 +20,9 @@ export const LightColorScheme = {
   nodeDragDropShadowOpacity: 0.2,
   nodeDragDropShadowBlur: 10,
 
+  nodeDebugHighlightColor: "#ffee00",
+
+  transitionDebugColor: " #ffee00",
   transitionSelectedArrowColor: "red",
   transitionArrowColor: "black",
   transitionLabelColor: "black",
@@ -55,6 +58,9 @@ export const DarkColorScheme = {
   nodeDragDropShadowOpacity: 0.3,
   nodeDragDropShadowBlur: 10,
 
+  nodeDebugHighlightColor: "#ffee00",
+
+  transitionDebugColor: "#ffee00",
   transitionSelectedArrowColor: "red",
   transitionArrowColor: "#E0E0E0",
   transitionLabelColor: "white",

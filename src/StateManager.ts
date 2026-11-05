@@ -2275,6 +2275,7 @@ export default class StateManager {
     StateManager._nextStateId = 0;
     UndoRedoManager.reset();
   }
+
   static async waitForLeftOrRightKey(): Promise<number> {
     return new Promise((resolve) => {
       function keyHandler(event: KeyboardEvent) {
@@ -2325,9 +2326,26 @@ export default class StateManager {
   public static delay(ms: number): Promise<void> {
     return new Promise((resolve) => setTimeout(resolve, ms));
   }
-  public static async debugMachine(path: any[]) {
+
+  public static unDebugHighlightAllObjects() {
+    StateManager.nodeWrappers.forEach((e: NodeWrapper) => {
+      e.debugUnHighlight();
+    });
+    StateManager.transitions.forEach((e: TransitionWrapper) => {
+      e.debugUnHighlight();
+    });
+  }
+
+  public static debugHighlightObject(object: NodeWrapper | TransitionWrapper) {
+    if (object instanceof NodeWrapper) {
+      object.debugHighlight();
+    } else if (object instanceof TransitionWrapper) {
+      object.debugHighlight();
+    }
+  }
+
+  public static async debugMachine(path: string[]) {
     let LegalMoveFlag = 1;
-    StateManager.deselectAllObjects();
     let pos = 0;
 
     while (1 == 1) {
@@ -2341,15 +2359,15 @@ export default class StateManager {
       }
       for (const n of StateManager._nodeWrappers) {
         if (n.labelText === path[pos] && LegalMoveFlag == 1) {
-          StateManager.deselectAllObjects();
+          StateManager.unDebugHighlightAllObjects();
           await StateManager.delay(100);
-          StateManager.selectObject(n);
+          StateManager.debugHighlightObject(n);
         }
       }
       let moveVal = await StateManager.waitForLeftOrRightKey();
       LegalMoveFlag = 1;
       if (moveVal == StateManager.debugOptions.KillDebug) {
-        StateManager.deselectAllObjects();
+        StateManager.unDebugHighlightAllObjects();
         break;
       } else {
         pos += moveVal;
