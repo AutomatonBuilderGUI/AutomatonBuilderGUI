@@ -15,7 +15,9 @@ import {
   BsGithub,
   BsClock,
   BsLink,
+  BsWrench,
 } from "react-icons/bs";
+import { FiveTupleDisplay } from "./components/FiveTuple";
 import { BiUndo } from "react-icons/bi";
 import TestStringWindow from "./components/TestStringWindow";
 import InformationBox, {
@@ -174,6 +176,11 @@ function App({ defaultDarkMode }: { defaultDarkMode: boolean }) {
   const closeGitWindow = () => {
     setconfigGitWindowOpen(false);
   };
+  // 5 tuple display tab
+  const [showTupleTab, setTupleTab] = useState(false);
+  const toggleTupleTab = () => {
+    setTupleTab(!showTupleTab);
+  };
 
   // React state and enable/disable functions for dark mode.
   const [useDarkMode, setDarkMode] = useState(defaultDarkMode);
@@ -305,6 +312,15 @@ function App({ defaultDarkMode }: { defaultDarkMode: boolean }) {
                 </div>
               </button>
               <button
+                className="rounded-full p-2 m-1 mx-2 block bg-gray-500 text-white text-center disabled:opacity-50 disabled:cursor-not-allowed"
+                onClick={toggleTupleTab}
+              >
+                <div className="flex flex-row items-center place-content-center mx-2">
+                  <BsWrench className="mr-1" />
+                  5-tuple definition
+                </div>
+              </button>
+              <button
                 className="rounded-full p-2 m-1 mx-2 block bg-blue-500 text-white text-center"
                 onClick={toggleActionStack}
               >
@@ -386,6 +402,14 @@ function App({ defaultDarkMode }: { defaultDarkMode: boolean }) {
                 </li>
               </BuildGitInfo>
             </ul>
+          </ClosableModalWindow>
+        )}
+      </div>
+
+      <div>
+        {showTupleTab && (
+          <ClosableModalWindow title="5-tuple" close={toggleTupleTab}>
+            <FiveTupleDisplay />
           </ClosableModalWindow>
         )}
       </div>
