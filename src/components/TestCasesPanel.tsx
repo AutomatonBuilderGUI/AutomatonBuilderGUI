@@ -17,6 +17,8 @@ export default function TestCasesPanel() {
   const [isErrorVisible, setIsErrorVisible] = useState(false);
   const [testResults, setTestResults] = useState([]);
   const [tests, setTests] = useState([]);
+  const [newTestString, setNewTestString] = useState("");
+  const [newTestExpectedAccept, setNewTestExpectedAccept] = useState(true);
   const testsFileInputRef = useRef<HTMLInputElement>(null); // Create a ref for the tests file input
 
   const handleErrorClose = () => {
@@ -26,6 +28,18 @@ export default function TestCasesPanel() {
   // Function to trigger tests file input click event
   const handleLoadTestsButtonClick = () => {
     testsFileInputRef.current?.click(); // Programmatically click the hidden file input
+  };
+
+  const handleAddTest = () => {
+    setTests((currentTests) => [
+      ...currentTests,
+      {
+        id: currentTests.length,
+        string: newTestString,
+        expectedAccept: newTestExpectedAccept,
+      },
+    ]);
+    setNewTestString("");
   };
 
   const handleExportTestsClick = () => {
@@ -175,6 +189,46 @@ export default function TestCasesPanel() {
             <span className="text-sky-500 dark:text-sky-200">Upload Tests</span>
           </button>
         </div>
+        <form
+          className="flex flex-col gap-2 my-3 text-left"
+          onSubmit={(event) => {
+            event.preventDefault();
+            handleAddTest();
+          }}
+        >
+          <label htmlFor="new-test-string">Test string</label>
+          <input
+            id="new-test-string"
+            type="text"
+            className="rounded p-2 bg-white text-black dark:bg-gray-700 dark:text-white"
+            value={newTestString}
+            onChange={(event) => setNewTestString(event.target.value)}
+            aria-describedby="new-test-string-help"
+          />
+          <span id="new-test-string-help" className="text-sm">
+            Leave blank to test the empty string.
+          </span>
+
+          <label htmlFor="new-test-result">Expected result</label>
+          <select
+            id="new-test-result"
+            className="rounded p-2 bg-white text-black dark:bg-gray-700 dark:text-white"
+            value={newTestExpectedAccept ? "accept" : "reject"}
+            onChange={(event) =>
+              setNewTestExpectedAccept(event.target.value === "accept")
+            }
+          >
+            <option value="accept">Accept</option>
+            <option value="reject">Reject</option>
+          </select>
+
+          <button
+            type="submit"
+            className="rounded-full p-2 bg-blue-600 dark:bg-blue-800 text-white text-center"
+          >
+            Add Test
+          </button>
+        </form>
         <div className="max-h-48 overflow-y-auto">{displayTest}</div>
         <div className="flex flex-col">
           <button
