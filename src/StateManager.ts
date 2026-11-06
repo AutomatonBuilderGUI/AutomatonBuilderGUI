@@ -1078,6 +1078,7 @@ export default class StateManager {
    */
   private static onKeyDown(ev: KeyboardEvent) {
     //based on the ignore shortcuts implementation in index.tsx
+
     const n = document.activeElement.nodeName;
     if (n === "INPUT" || n === "TEXTAREA") {
       return;
@@ -1091,12 +1092,18 @@ export default class StateManager {
     // https://stackoverflow.com/a/77837006
     if ((ev.metaKey || ev.ctrlKey) && ev.key == "z" && !this.debugActive) {
       ev.preventDefault();
+      UndoRedoManager.undo();
+      return;
+    }
 
-      if (ev.shiftKey) {
-        UndoRedoManager.redo();
-      } else {
-        UndoRedoManager.undo();
-      }
+    // ** handle Ctrl+Y and Ctrl+Shift+Z (redo)**
+    if (
+      (ev.metaKey || ev.ctrlKey) &&
+      (ev.key == "Z" || ev.key == "y") &&
+      !this.debugActive
+    ) {
+      ev.preventDefault();
+      UndoRedoManager.redo();
       return;
     }
 
