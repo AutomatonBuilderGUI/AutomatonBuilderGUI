@@ -266,9 +266,10 @@ export default class NodeWrapper extends SelectableObject {
     ) {
       // If shift isn't being held, then clear all previous selection
       if (!ev.evt.shiftKey) {
-        StateManager.deselectAllObjects();
+        StateManager.setSelection([this]);
+      } else {
+        StateManager.addToSelection([this]);
       }
-      StateManager.selectObject(this);
     }
   }
 
@@ -424,10 +425,10 @@ export default class NodeWrapper extends SelectableObject {
       StateManager.startTentativeTransition(this);
     } else if (StateManager.currentTool === Tool.Select) {
       if (!ev.evt.shiftKey && StateManager.selectedObjects.length === 1) {
-        StateManager.deselectAllObjects();
+        StateManager.setSelection([this]);
+      } else {
+        StateManager.addToSelection([this]);
       }
-      StateManager.selectObject(this);
-
       StateManager.selectedObjects.forEach((obj) => {
         if (obj instanceof NodeWrapper) {
           obj.dragHighlightEffect();
