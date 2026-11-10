@@ -107,6 +107,17 @@ export default class TransitionWrapper extends SelectableObject {
       lineJoin: "round",
       pointerLength: 10,
       pointerWidth: 10,
+
+      //Custom hitbox for all arrows made via TransitionWrapper
+      hitFunc: function (context: Konva.Context, shape: Konva.Shape) {
+        context.beginPath();
+        const originalStrokeWidth = shape.strokeWidth();
+        //Hitbox area
+        shape.strokeWidth(20);
+        (shape as any)._sceneFunc(context);
+        //set strokeWidth back for drawing purposes
+        shape.strokeWidth(originalStrokeWidth);
+      },
     });
 
     this.labelCenterDebugObject = new Konva.Circle({
@@ -383,9 +394,10 @@ export default class TransitionWrapper extends SelectableObject {
     ) {
       // If shift isn't being held, then clear all previous selection
       if (!ev.evt.shiftKey) {
-        StateManager.deselectAllObjects();
+        StateManager.setSelection([this]);
+      } else {
+        StateManager.addToSelection([this]);
       }
-      StateManager.selectObject(this);
     }
   }
 
