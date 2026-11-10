@@ -27,6 +27,11 @@ export default class StateManager {
    */
   static _nextStateId = 0;
 
+  /**
+   * Stores a list of the objects that were selected when debug mode was enabled.
+   */
+  static _selectedBeforeDebug: SelectableObject[] = [];
+
   /** Returns the current start node for the automaton. */
   public static get startNode(): NodeWrapper | null {
     return StateManager._startNode;
@@ -530,9 +535,6 @@ export default class StateManager {
    * Selects all the nodes inside the box and kills the selection box.
    */
   public static completeSelectBox(evt: KonvaEventObject<PointerEvent>) {
-    if (!evt.evt.shiftKey) {
-      StateManager.deselectAllObjects();
-    }
     const [min_x, min_y, max_x, max_y] = this.getSelectBoxBounds();
     const selectedNodes: NodeWrapper[] = StateManager._nodeWrappers.filter(
       (node: NodeWrapper) => {
@@ -541,17 +543,11 @@ export default class StateManager {
         return min_x <= x && min_y <= y && max_x >= x && max_y >= y;
       },
     );
-    selectedNodes.forEach((node1: NodeWrapper) => {
-      StateManager.selectObject(node1);
-      /* I am not sure if we should select transitons, but incase we want to add it, the code is right here
-      selectedNodes.forEach((node2: NodeWrapper) => {
-        const transition = StateManager.transitions.find((t) =>
-          (t.sourceNode.id === node1.id && t.destNode.id === node2.id)
-        );
-        if (transition !== undefined) StateManager.selectObject(transition);
-      })
-      */
-    });
+    if (!evt.evt.shiftKey) {
+      StateManager.setSelection(selectedNodes);
+    } else {
+      StateManager.addToSelection(selectedNodes);
+    }
     StateManager.killSelectBox();
   }
 
@@ -654,7 +650,7 @@ export default class StateManager {
       StateManager._stage.getPointerPosition(),
     );
     if (!thingUnderMouse && !evt.evt.shiftKey) {
-      StateManager.deselectAllObjects();
+      StateManager.clearSelection();
     }
   }
 
@@ -871,6 +867,7 @@ export default class StateManager {
         StateManager._transitionLayer.add(transition.konvaGroup);
       });
       StateManager.updateTransitions();
+      StateManager.selectObject(data.node);
     };
     let removeNodeAction = new Action(
       "removeNode",
@@ -1156,7 +1153,7 @@ export default class StateManager {
       return;
     }
 
-    let pasteData = new PasteActionData();
+    let pasteData = new PasteActionData(StateManager.selectedObjects);
 
     // Count the number of nodes to be pasted for action description
     let nodeCount = this._clipboard.filter(
@@ -1226,7 +1223,7 @@ export default class StateManager {
       StateManager._transitionLayer?.draw();
       StateManager.updateTransitions();
 
-      // Select the newly pasted nodes
+      // Select the newly pasted nodes.
       StateManager.deselectAllObjects();
       data.nodes.forEach((node) => StateManager.selectObject(node));
     };
@@ -1254,6 +1251,8 @@ export default class StateManager {
           StateManager.startNode = null;
         }
       });
+
+      data.originalSelected.forEach(StateManager.selectObject);
 
       StateManager._nodeLayer?.draw();
       StateManager._transitionLayer?.draw();
@@ -1304,7 +1303,7 @@ export default class StateManager {
     ];
 
     // Create an action to remove the selected objects
-    let cutData = new CutActionData();
+    let cutData = new CutActionData(this.selectedObjects);
 
     cutData.nodes = selectedNodes;
     cutData.transitions = [
@@ -1364,9 +1363,10 @@ export default class StateManager {
         StateManager._transitionWrappers.push(transition);
         StateManager._transitionLayer.add(transition.konvaGroup);
       });
-
       StateManager._nodeLayer?.draw();
       StateManager._transitionLayer?.draw();
+      StateManager.deselectAllObjects();
+      data.originalSelected.forEach(StateManager.selectObject);
       StateManager.updateTransitions();
     };
 
@@ -1379,8 +1379,6 @@ export default class StateManager {
     );
 
     UndoRedoManager.pushAction(cutAction);
-
-    StateManager.deselectAllObjects();
   }
 
   /**
@@ -1494,21 +1492,12 @@ export default class StateManager {
           t.destNode.id === StateManager.tentativeTransitionTarget.id,
       );
       if (existingTransition) {
-        StateManager.deselectAllObjects();
-        StateManager.selectObject(existingTransition);
+        StateManager.setSelection([existingTransition]);
       } else {
         StateManager.addTransition(
           StateManager._tentativeTransitionSource,
           StateManager._tentativeTransitionTarget,
         );
-        // I know there might be a more efficient way than rescanning the whole thing for the transition we just added, but I don't want to mess it up.
-        const newTransition = StateManager.transitions.find(
-          (t) =>
-            t.sourceNode.id === StateManager._tentativeTransitionSource.id &&
-            t.destNode.id === StateManager.tentativeTransitionTarget.id,
-        );
-        StateManager.deselectAllObjects();
-        StateManager.selectObject(newTransition);
       }
     }
 
@@ -1529,10 +1518,13 @@ export default class StateManager {
   public static addTransition(source: NodeWrapper, dest: NodeWrapper) {
     if (this.debugActive) return;
     const newTransition = new TransitionWrapper(source, dest);
+    const originalSelected: SelectableObject[] = StateManager.selectedObjects;
 
     let addTransitionForward = (data: AddTransitionActionData) => {
       StateManager._transitionWrappers.push(data.transition);
       StateManager._transitionLayer.add(data.transition.konvaGroup);
+      StateManager.deselectAllObjects();
+      StateManager.selectObject(data.transition);
       StateManager.updateTransitions();
     };
 
@@ -1540,15 +1532,20 @@ export default class StateManager {
       StateManager._transitionWrappers =
         StateManager._transitionWrappers.filter((i) => i !== data.transition);
       data.transition.konvaGroup.remove();
+      StateManager.deselectAllObjects();
+      data.originalSelected.forEach(StateManager.selectObject);
       StateManager.updateTransitions();
     };
+
+    let newData = new AddTransitionActionData(originalSelected);
+    newData.transition = newTransition;
 
     let addTransitionAction = new Action(
       "addTransition",
       `Add Transition from "${source.labelText}" to "${dest.labelText}"`,
       addTransitionForward,
       addTransitionBackward,
-      { transition: newTransition },
+      newData,
     );
     UndoRedoManager.pushAction(addTransitionAction);
   }
@@ -1575,6 +1572,7 @@ export default class StateManager {
       StateManager._transitionWrappers.push(data.transition);
 
       StateManager._transitionLayer.add(data.transition.konvaGroup);
+      StateManager.selectObject(data.transition);
       StateManager.updateTransitions();
     };
 
@@ -1904,8 +1902,62 @@ export default class StateManager {
     return [...StateManager._selectedObjects];
   }
 
+  /** Augments the selection in a way supported by the UndoRedoManager */
+  public static addToSelection(objs: SelectableObject[]) {
+    if (objs.length == 0) return;
+    StateManager.setSelection(objs.concat(StateManager._selectedObjects));
+  }
+  /** Clears the selection in a way supported by the UndoRedoManager */
+  public static clearSelection() {
+    if (StateManager.selectedObjects.length == 0) return;
+    StateManager.setSelection([]);
+  }
+
+  /** Sets the selection in a way supported by the UndoRedoManager */
+  public static setSelection(objs: SelectableObject[]) {
+    if (
+      objs.concat(StateManager.selectedObjects).every((e: SelectableObject) => {
+        return (
+          objs.indexOf(e) > -1 && StateManager.selectedObjects.indexOf(e) > -1
+        );
+      })
+    ) {
+      return; //if the selection is the same, we don't do anything.
+    }
+
+    const forward = (data: ChangeSelectionActionData) => {
+      StateManager._selectedObjects = data.newSelection;
+      StateManager.setSelectedObjects(data.newSelection);
+
+      data.oldSelection.forEach((e: SelectableObject) => {
+        e.deselect();
+      });
+      data.newSelection.forEach((e: SelectableObject) => {
+        e.select();
+      });
+    };
+    const backward = (data: ChangeSelectionActionData) => {
+      StateManager.setSelectedObjects(data.oldSelection);
+      StateManager._selectedObjects = data.oldSelection;
+      data.newSelection.forEach((e: SelectableObject) => {
+        e.deselect();
+      });
+      data.oldSelection.forEach((e: SelectableObject) => {
+        e.select();
+      });
+    };
+    let action = new Action(
+      "changeSelection",
+      "Change Selection",
+      forward,
+      backward,
+      { oldSelection: StateManager._selectedObjects, newSelection: objs },
+    );
+    UndoRedoManager.pushAction(action);
+  }
+
   /**
-   * Adds a given object to the current selection.
+   * Adds a given object directly to the current selection. Be wary, this is not undo-redo safe. Use addToSelection or setSelection instead if you want undo-redo safety.
    * @param obj The object to select.
    * @returns
    */
@@ -1919,7 +1971,7 @@ export default class StateManager {
     obj.select();
   }
 
-  /** Removes all objects from the current selection. */
+  /** Directly removes all objects from the current selection. Be wary, this is not undo-redo safe. Use clearSelection or setSelection instead if you want undo-redo safety.*/
   public static deselectAllObjects() {
     StateManager._selectedObjects.forEach((obj) => obj.deselect());
     StateManager.setSelectedObjects([]);
@@ -1960,7 +2012,9 @@ export default class StateManager {
     ) as CommentRegion[];
 
     // Create an action to remove the selected objects
-    let removeData = new RemoveNodeActionDataMulti();
+    let removeData = new RemoveNodeActionDataMulti(
+      StateManager.selectedObjects,
+    );
 
     removeData.nodes = selectedNodes;
     removeData.transitions = [
@@ -2038,9 +2092,9 @@ export default class StateManager {
     let performRemoveBackward = (data: RemoveNodeActionDataMulti) => {
       // Add comment regions back
       StateManager._commentRegions.push(...data.comments);
-      data.comments.forEach((comment) =>
-        StateManager._commentLayer.add(comment.nodeGroup),
-      );
+      data.comments.forEach((comment) => {
+        StateManager._commentLayer.add(comment.nodeGroup);
+      });
 
       // Add nodes back
       data.nodes.forEach((node) => {
@@ -2078,7 +2132,8 @@ export default class StateManager {
         StateManager._transitionWrappers.push(transition);
         StateManager._transitionLayer.add(transition.konvaGroup);
       });
-
+      StateManager.deselectAllObjects();
+      data.originalSelected.forEach(StateManager.selectObject);
       StateManager._nodeLayer?.draw();
       StateManager._transitionLayer?.draw();
       StateManager._commentLayer?.draw();
@@ -2094,8 +2149,6 @@ export default class StateManager {
     );
 
     UndoRedoManager.pushAction(removeAction);
-
-    StateManager.deselectAllObjects();
   }
 
   /**
@@ -2334,6 +2387,7 @@ export default class StateManager {
   }
   public static async debugMachine(path: any[]) {
     let LegalMoveFlag = 1;
+    StateManager._selectedBeforeDebug = StateManager.selectedObjects;
     StateManager.deselectAllObjects();
     let pos = 0;
 
@@ -2357,6 +2411,7 @@ export default class StateManager {
       LegalMoveFlag = 1;
       if (moveVal == StateManager.debugOptions.KillDebug) {
         StateManager.deselectAllObjects();
+        StateManager._selectedBeforeDebug.forEach(StateManager.selectObject); //reset selected objects to how it was before debug mode.
         break;
       } else {
         pos += moveVal;
@@ -3027,8 +3082,18 @@ class RemoveNodeActionDataMulti extends ActionData {
   /** The comment regions removed in this action. */
   public comments: CommentRegion[] = [];
 
+  /**
+   * The objects that were selected before removal. We need this stored because we otherwise can't tell if a transition was selected.
+   */
+  public originalSelected: SelectableObject[];
+
   /** Whether any of the nodes removed were the start node. */
   public wasStartNode: boolean = false;
+
+  constructor(originalSelected: SelectableObject[]) {
+    super();
+    this.originalSelected = originalSelected;
+  }
 }
 
 /** Holds the data associated with a "move nodes" action. */
@@ -3077,6 +3142,14 @@ class SetNodeIsStartActionData extends ActionData {
 class AddTransitionActionData extends ActionData {
   /** The transition created in this action. */
   public transition: TransitionWrapper;
+
+  /** Objects that were selected before the transition was added */
+  public originalSelected: SelectableObject[];
+
+  constructor(originalSelected: SelectableObject[]) {
+    super();
+    this.originalSelected = originalSelected;
+  }
 }
 
 /** Holds the data associated with a "remove transition" action. */
@@ -3131,6 +3204,14 @@ class PasteActionData extends ActionData {
 
   /** The transitions created in this action. */
   public transitions: TransitionWrapper[] = [];
+
+  /** The objects selected before the paste */
+  public originalSelected: SelectableObject[] = [];
+
+  constructor(originalSelected: SelectableObject[]) {
+    super();
+    this.originalSelected = originalSelected;
+  }
 }
 
 /** Holds the data associated with a "cut" action. */
@@ -3143,6 +3224,13 @@ class CutActionData extends ActionData {
 
   /** Whether any of the nodes removed were the start node. */
   public wasStartNode: boolean = false;
+
+  public originalSelected: SelectableObject[] = [];
+
+  constructor(originalSelected: SelectableObject[]) {
+    super();
+    this.originalSelected = originalSelected;
+  }
 }
 
 /** Holds the data associated with a "create comment" action. */
@@ -3198,4 +3286,13 @@ class ResizeCommentActionData extends ActionData {
 
   /** The comment being resized in this action. */
   public comment: CommentRegion;
+}
+
+/** Holds the data associated with a "change selection" action */
+class ChangeSelectionActionData extends ActionData {
+  /** The old selection set before the action was taken */
+  public oldSelection: SelectableObject[] = [];
+
+  /** The new selection set after the action was taken */
+  public newSelection: SelectableObject[] = [];
 }
