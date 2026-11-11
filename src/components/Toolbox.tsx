@@ -321,23 +321,23 @@ export default function Toolbox(props: React.PropsWithChildren<ToolboxProps>) {
         )}
 
         {/* Undo Button */}
-        {!isDebugActive && (
+        {
           <ActionButton
             onClick={StateManager.undoState}
             icon={<BsFillArrowLeftCircleFill />}
             title="Undo most recent action"
             bgColor="bg-blue-500"
           ></ActionButton>
-        )}
+        }
         {/* Redo Button */}
-        {!isDebugActive && (
+        {
           <ActionButton
             onClick={StateManager.redoState}
             icon={<BsFillArrowRightCircleFill />}
             title="Redo most recent action"
             bgColor="bg-blue-500"
           ></ActionButton>
-        )}
+        }
         {/* Export Button */}
         <ActionButton
           onClick={StateManager.exportAutomatonToImage}
