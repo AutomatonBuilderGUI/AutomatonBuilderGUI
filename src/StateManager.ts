@@ -1093,10 +1093,17 @@ export default class StateManager {
       return;
     }
 
+    /**
+     * When you hit Ctrl+Shift+Z in windows, the key value is Z instead of z. This seems like a useful way
+     * to determine whether shift was held, but it fails because the key value is z in mac. So, we also need to check the combination of key=z and shiftKey.
+     *
+     * The internet is made from duct tape and nightmeres.
+     */
+
     // ** handle Ctrl+Y and Ctrl+Shift+Z (redo)**
     if (
       (ev.metaKey || ev.ctrlKey) &&
-      (ev.key == "Z" || ev.key == "y") &&
+      (ev.key == "Z" || (ev.key == "z" && ev.shiftKey) || ev.key == "y") &&
       !this.debugActive
     ) {
       ev.preventDefault();
