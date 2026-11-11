@@ -422,10 +422,10 @@ export default class NodeWrapper extends SelectableObject {
     ) {
       this.nodeGroup.stopDrag();
     } else if (StateManager.currentTool === Tool.Transitions) {
-      StateManager.lockTool();
+      StateManager.blockOtherActions();
       StateManager.startTentativeTransition(this);
     } else if (StateManager.currentTool === Tool.Select) {
-      StateManager.lockTool();
+      StateManager.blockOtherActions();
       if (!ev.evt.shiftKey && StateManager.selectedObjects.length === 1) {
         StateManager.setSelection([this]);
       } else {
@@ -491,7 +491,7 @@ export default class NodeWrapper extends SelectableObject {
    * and then the movement is added to the action stack.
    */
   public onDragEnd() {
-    StateManager.unlockTool();
+    StateManager.allowOtherActions();
     this.dragHighlightEffectDisable();
     if (StateManager.currentTool === Tool.States) {
     } else if (

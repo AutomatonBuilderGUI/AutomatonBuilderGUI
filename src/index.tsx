@@ -70,7 +70,7 @@ function App({ defaultDarkMode }: { defaultDarkMode: boolean }) {
       if (n == "TEXTAREA" || n == "INPUT") {
         return;
       }
-      if (StateManager.toolsAreUnlocked) {
+      if (StateManager.safeToAct) {
         if (ev.code === "KeyA") {
           setCurrentTool(Tool.States);
         } else if (ev.code === "KeyT") {
