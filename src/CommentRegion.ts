@@ -266,7 +266,7 @@ export default class CommentRegion extends SelectableObject {
       this.nodeGroup.stopDrag();
       return;
     }
-
+    StateManager.blockOtherActions();
     if (!ev.evt.shiftKey && StateManager.selectedObjects.length === 1) {
       StateManager.setSelection([this]);
     } else {
@@ -300,6 +300,7 @@ export default class CommentRegion extends SelectableObject {
   public onDragEnd(ev: Konva.KonvaEventObject<MouseEvent>) {
     // prevents calling completeDrag when no cooresponding startDrag was previously called
     if (ev.evt === undefined) return;
+    StateManager.allowOtherActions();
     StateManager.completeDragCommentsOperation(this.nodeGroup.position());
   }
 
