@@ -1087,7 +1087,12 @@ export default class StateManager {
     }
 
     // https://stackoverflow.com/a/77837006
-    if ((ev.metaKey || ev.ctrlKey) && ev.key == "z" && !this.debugActive) {
+    if (
+      (ev.metaKey || ev.ctrlKey) &&
+      ev.key == "z" &&
+      !ev.shiftKey &&
+      !this.debugActive
+    ) {
       ev.preventDefault();
       UndoRedoManager.undo();
       return;
