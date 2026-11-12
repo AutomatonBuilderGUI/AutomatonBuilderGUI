@@ -75,6 +75,8 @@ export default class StateManager {
   /** Keeps track of the current tool being used by the user. */
   private static _currentTool: Tool = Tool.States;
 
+  private static lockExtras: boolean = false;
+
   /** The stage, or canvas, where the state machine is drawn. */
   private static _stage: Konva.Stage | null = null;
 
@@ -432,6 +434,20 @@ export default class StateManager {
       height: maxY - minY,
     };
   }
+  //lock tool-changing
+  public static blockOtherActions() {
+    StateManager.lockExtras = true;
+  }
+
+  //unlock tool-changing
+  public static allowOtherActions() {
+    StateManager.lockExtras = false;
+  }
+
+  //If true, the tool can't be switched.
+  public static get safeToAct(): boolean {
+    return !StateManager.lockExtras;
+  }
 
   public static exportAutomatonToImage() {
     if (!StateManager._stage) {
@@ -503,6 +519,7 @@ export default class StateManager {
 
   /** Sets the current tool. */
   public static set currentTool(tool: Tool) {
+    if (!StateManager.safeToAct) return;
     StateManager._currentTool = tool;
   }
 
@@ -518,6 +535,7 @@ export default class StateManager {
 
   /** Creates a selection box. */
   public static startSelectBox(start: Vector2d) {
+    StateManager.blockOtherActions();
     StateManager._selectBoxStart = start;
     StateManager._stage?.setDraggable(false);
   }
@@ -526,6 +544,7 @@ export default class StateManager {
    * Deletes and cleans up the selection box.
    */
   public static killSelectBox() {
+    StateManager.allowOtherActions();
     StateManager._selectBoxStart = null;
     StateManager._stage?.setDraggable(true);
     StateManager.drawSelectBox();
@@ -1078,13 +1097,16 @@ export default class StateManager {
       return;
     }
 
-    if (ev.code === "Backspace" || ev.code === "Delete") {
+    if (
+      (ev.code === "Backspace" || ev.code === "Delete") &&
+      StateManager.safeToAct
+    ) {
       StateManager.deleteAllSelectedObjects();
       return;
     }
 
     // https://stackoverflow.com/a/77837006
-    if ((ev.metaKey || ev.ctrlKey) && ev.key == "z") {
+    if ((ev.metaKey || ev.ctrlKey) && ev.key == "z" && StateManager.safeToAct) {
       ev.preventDefault();
 
       if (ev.shiftKey) {
@@ -1096,20 +1118,32 @@ export default class StateManager {
     }
 
     // **Handle Ctrl+C (Copy)**
-    if ((ev.metaKey || ev.ctrlKey) && ev.key === "c") {
+    if (
+      (ev.metaKey || ev.ctrlKey) &&
+      ev.key === "c" &&
+      StateManager.safeToAct
+    ) {
       ev.preventDefault();
       StateManager.copySelectedObjects();
       return;
     }
 
     // **Handle Ctrl+X (Cut)**
-    if ((ev.metaKey || ev.ctrlKey) && ev.key === "x") {
+    if (
+      (ev.metaKey || ev.ctrlKey) &&
+      ev.key === "x" &&
+      StateManager.safeToAct
+    ) {
       ev.preventDefault();
       StateManager.cutSelectedObjects();
       return;
     }
     // **Handle Ctrl+V (Paste)**
-    if ((ev.metaKey || ev.ctrlKey) && ev.key === "v") {
+    if (
+      (ev.metaKey || ev.ctrlKey) &&
+      ev.key === "v" &&
+      StateManager.safeToAct
+    ) {
       ev.preventDefault();
       StateManager.pasteClipboardObjects();
       return;
