@@ -15,7 +15,17 @@ export default class UndoRedoManager {
   // A set of functions to call when the stack changes.
   private static _listeners: Set<() => void> = new Set<() => void>();
 
+  /**
+   * Pushes an action to the undo-redo system and performs it.
+   *
+   * Note: if you are going to set perform forward to false, it is on you to make sure that debug-unsafe actions are stopped.
+   *
+   * @param action the action to push to the action stack.
+   * @param performForward by default, this is true, override to false to skip performing the action.
+   * @returns
+   */
   public static pushAction(action: Action, performForward: boolean = true) {
+    if (!action.isDebugSafe && StateManager.debugEnabled) return;
     // If we got here then some kind of change happened so mark it as dirty.
     StateManager.makeDirty();
     if (this._stackLocation == this._stack.length - 1) {
@@ -50,6 +60,13 @@ export default class UndoRedoManager {
       console.error("Can't redo because we're at the top of the stack");
       return;
     }
+    if (
+      !this._stack[this._stackLocation + 1].isDebugSafe &&
+      StateManager.debugEnabled
+    ) {
+      console.error("Can't redo because the next action is not debug safe");
+      return;
+    }
     this._stackLocation += 1;
     this._stack[this._stackLocation].forward();
     this.callListeners();
@@ -59,6 +76,13 @@ export default class UndoRedoManager {
     StateManager.makeDirty();
     if (this._stackLocation == -1) {
       console.error("Can't undo because the stack is empty");
+      return;
+    }
+    if (
+      !this._stack[this._stackLocation].isDebugSafe &&
+      StateManager.debugEnabled
+    ) {
+      console.error("Can't undo because the previous action is not debug safe");
       return;
     }
     this._stack[this._stackLocation].backward();
@@ -100,6 +124,7 @@ export class Action {
   private _backward: (data: ActionData) => void;
   private _data: ActionData;
   private _id: string;
+  public isDebugSafe: boolean;
 
   constructor(
     name: string,
@@ -107,6 +132,7 @@ export class Action {
     forward: (data: ActionData) => void,
     backward: (data: ActionData) => void,
     data: ActionData,
+    debugSafe: boolean = false,
   ) {
     this.name = name;
     this.displayString = displayString;
@@ -114,6 +140,7 @@ export class Action {
     this._backward = backward;
     this._data = data;
     this._id = uuidv4();
+    this.isDebugSafe = debugSafe;
   }
 
   public get id(): string {

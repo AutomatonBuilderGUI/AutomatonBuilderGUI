@@ -756,6 +756,7 @@ export default class StateManager {
       addCommentForward,
       addCommentBackward,
       { x: pos.x, y: pos.y, commentRegion: null },
+      true,
     );
     UndoRedoManager.pushAction(addCommentAction);
   }
@@ -766,7 +767,6 @@ export default class StateManager {
   private static addStateAtDoubleClickPos(
     evt: Konva.KonvaEventObject<MouseEvent>,
   ) {
-    if (this.debugActive) return;
     if (!StateManager._stage) return;
 
     const stage = StateManager._stage;
@@ -827,7 +827,6 @@ export default class StateManager {
    * @param node The node to remove.
    */
   public static removeNode(node: NodeWrapper) {
-    if (this.debugActive) return;
     // Find all transitions involving this node, save those
     let transitionsInvolvingThisNode = new Set(
       this._transitionWrappers.filter((i) => i.involvesNode(node)),
@@ -908,7 +907,6 @@ export default class StateManager {
    * @param newName The new name to give to the node.
    */
   public static setNodeName(node: NodeWrapper, newName: string) {
-    if (this.debugActive) return;
     let oldName = node.labelText;
 
     let setNodeNameForward = (data: SetNodeNameActionData) => {
@@ -935,7 +933,6 @@ export default class StateManager {
    * @param isAccept Whether or not the given nodes should be an accepting node.
    */
   public static setNodesIsAccept(nodes: NodeWrapper[], isAccept: boolean) {
-    if (this.debugActive) return;
     let oldValues = nodes.map((node) => node.isAcceptNode);
 
     let setNodesIsAcceptForward = (data: SetNodesIsAcceptActionData) => {
@@ -974,7 +971,6 @@ export default class StateManager {
    * @param node The node to set as the start node.
    */
   public static setNodeIsStart(node: NodeWrapper) {
-    if (this.debugActive) return;
     let oldStart = StateManager._startNode;
 
     let setNodeIsStartForward = (data: SetNodeIsStartActionData) => {
@@ -1054,6 +1050,7 @@ export default class StateManager {
       setColorForward,
       setColorBackward,
       { oldColors, newColor, comments },
+      true,
     );
 
     UndoRedoManager.pushAction(setCommentsColorAction);
@@ -1084,6 +1081,7 @@ export default class StateManager {
       setTextForward,
       setTextBackward,
       { oldTexts, newText, comments },
+      true,
     );
 
     UndoRedoManager.pushAction(setCommentsTextAction);
@@ -1113,7 +1111,6 @@ export default class StateManager {
       (ev.metaKey || ev.ctrlKey) &&
       ev.key == "z" &&
       !ev.shiftKey &&
-      !this.debugActive &&
       StateManager.safeToAct
     ) {
       ev.preventDefault();
@@ -1143,7 +1140,6 @@ export default class StateManager {
     if (
       (ev.metaKey || ev.ctrlKey) &&
       ev.key === "c" &&
-      !this.debugActive &&
       StateManager.safeToAct
     ) {
       ev.preventDefault();
@@ -1155,7 +1151,6 @@ export default class StateManager {
     if (
       (ev.metaKey || ev.ctrlKey) &&
       ev.key === "x" &&
-      !this.debugActive &&
       StateManager.safeToAct
     ) {
       ev.preventDefault();
@@ -1166,7 +1161,6 @@ export default class StateManager {
     if (
       (ev.metaKey || ev.ctrlKey) &&
       ev.key === "v" &&
-      !this.debugActive &&
       StateManager.safeToAct
     ) {
       ev.preventDefault();
@@ -1209,6 +1203,8 @@ export default class StateManager {
     let nodeCount = this._clipboard.filter(
       (obj) => obj instanceof NodeWrapper,
     ).length;
+
+    let isOnlyComments: boolean = nodeCount == 0;
 
     let performPasteForward = (data: PasteActionData) => {
       if (data.nodes.length === 0) {
@@ -1316,6 +1312,7 @@ export default class StateManager {
       performPasteForward,
       performPasteBackward,
       pasteData,
+      isOnlyComments,
     );
 
     UndoRedoManager.pushAction(pasteAction);
@@ -1351,6 +1348,9 @@ export default class StateManager {
       ...selectedTransitions,
       ...transitionsBetweenSelectedNodes,
     ];
+
+    const isOnlyComments: boolean =
+      selectedNodes.length == 0 && selectedTransitions.length == 0;
 
     // Create an action to remove the selected objects
     let cutData = new CutActionData(this.selectedObjects);
@@ -1426,6 +1426,7 @@ export default class StateManager {
       performCutForward,
       performCutBackward,
       cutData,
+      isOnlyComments,
     );
 
     UndoRedoManager.pushAction(cutAction);
@@ -1566,7 +1567,6 @@ export default class StateManager {
    * @param dest The destination node for this transition.
    */
   public static addTransition(source: NodeWrapper, dest: NodeWrapper) {
-    if (this.debugActive) return;
     const newTransition = new TransitionWrapper(source, dest);
     const originalSelected: SelectableObject[] = StateManager.selectedObjects;
 
@@ -1606,7 +1606,6 @@ export default class StateManager {
    * @param transition The transition to remove.
    */
   public static removeTransition(transition: TransitionWrapper) {
-    if (this.debugActive) return;
     let removeTransitionForward = (data: RemoveTransitionActionData) => {
       StateManager._transitionWrappers =
         StateManager._transitionWrappers.filter(
@@ -1641,10 +1640,6 @@ export default class StateManager {
    * empty symbol to the automaton.
    */
   public static addToken() {
-    // TODO: logic for removing tokens needs to be modified - right now
-    // it looks like it does some checks that we may no longer want, now
-    // that we have undo/redo!
-    if (this.debugActive) return;
     const newToken = new TokenWrapper();
     let addTokenForward = (data: AddTokenActionData) => {
       StateManager._alphabet.push(data.token);
@@ -1719,7 +1714,6 @@ export default class StateManager {
    * @param token The token to remove.
    */
   public static removeToken(token: TokenWrapper) {
-    if (this.debugActive) return;
     let transitionsUsingToken = StateManager._transitionWrappers.filter(
       (trans) => trans.hasToken(token),
     );
@@ -1753,7 +1747,6 @@ export default class StateManager {
    * @param newSymbol The new symbol/label for the token.
    */
   public static setTokenSymbol(token: TokenWrapper, newSymbol: string) {
-    if (this.debugActive) return;
     let oldSymbol = token.symbol;
 
     let setTokenSymbolForward = (data: SetTokenSymbolActionData) => {
@@ -1786,7 +1779,6 @@ export default class StateManager {
     transition: TransitionWrapper,
     token: TokenWrapper,
   ) {
-    if (this.debugActive) return;
     let hadTokenBefore = transition.hasToken(token);
     let setTransitionAcceptsTokenForward = (
       data: SetTransitionAcceptsTokenData,
@@ -1824,7 +1816,6 @@ export default class StateManager {
     transition: TransitionWrapper,
     token: TokenWrapper,
   ) {
-    if (this.debugActive) return;
     let hadTokenBefore = transition.hasToken(token);
     let setTransitionDoesntAcceptTokenForward = (
       data: SetTransitionAcceptsTokenData,
@@ -1858,7 +1849,6 @@ export default class StateManager {
    * @param transition The transition to make accept the empty string.
    */
   public static setTransitionAcceptsEpsilon(transition: TransitionWrapper) {
-    if (this.debugActive) return;
     let hadEpsilonBefore = transition.isEpsilonTransition;
 
     let setTransitionAcceptsEpsilonForward = (
@@ -1890,7 +1880,6 @@ export default class StateManager {
   public static setTransitionDoesntAcceptEpsilon(
     transition: TransitionWrapper,
   ) {
-    if (this.debugActive) return;
     let hadEpsilonBefore = transition.isEpsilonTransition;
 
     let setTransitionDoesntAcceptEpsilonForward = (
@@ -2002,6 +1991,7 @@ export default class StateManager {
       forward,
       backward,
       { oldSelection: StateManager._selectedObjects, newSelection: objs },
+      true,
     );
     UndoRedoManager.pushAction(action);
   }
@@ -2033,7 +2023,6 @@ export default class StateManager {
    * undo/redo safe manner.
    */
   public static deleteAllSelectedObjects() {
-    if (this.debugActive) return;
     if (this._selectedObjects.length === 0) {
       return;
     }
@@ -2060,6 +2049,9 @@ export default class StateManager {
     const selectedComments = this._selectedObjects.filter(
       (obj) => obj instanceof CommentRegion,
     ) as CommentRegion[];
+
+    const onlyComments: boolean =
+      selectedNodes.length == 0 && selectedTransitions.length == 0;
 
     // Create an action to remove the selected objects
     let removeData = new RemoveNodeActionDataMulti(
@@ -2196,6 +2188,7 @@ export default class StateManager {
       performRemoveForward,
       performRemoveBackward,
       removeData,
+      onlyComments,
     );
 
     UndoRedoManager.pushAction(removeAction);
@@ -2211,7 +2204,6 @@ export default class StateManager {
    * @param node The node to remove.
    */
   public static deleteNode(node: NodeWrapper) {
-    if (this.debugActive) return;
     const transitionsDependentOnDeletedNode: Array<TransitionWrapper> = [];
     StateManager._transitionWrappers.forEach((trans) => {
       if (
@@ -2918,6 +2910,7 @@ export default class StateManager {
       moveStatesForward,
       moveStatesBackward,
       { delta: delta, states: [...this.selectedObjects] },
+      true,
     );
 
     UndoRedoManager.pushAction(moveNodesAction, false);
@@ -2975,6 +2968,7 @@ export default class StateManager {
       moveCommentsForward,
       moveCommentsBackward,
       { delta: delta, comments: [...this.selectedObjects] },
+      true,
     );
 
     UndoRedoManager.pushAction(moveCommentsAction, false);
@@ -3017,6 +3011,7 @@ export default class StateManager {
         oldSize: StateManager._resizeCommentStartSize,
         comment: StateManager._resizeComment,
       },
+      true,
     );
 
     UndoRedoManager.pushAction(resizeCommentAction, false);
