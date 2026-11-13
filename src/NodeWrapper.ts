@@ -648,15 +648,15 @@ export default class NodeWrapper extends SelectableObject {
 
     if (this._isDebugHighlighted) {
       // Selected state appearance
-      // Yellw selection stroke (overrides error stroke)
-      this.nodeBackground.stroke(
+      // Yellw selection stroke (overrides error fill)
+      this.nodeBackground.fill(
         StateManager.colorScheme.nodeDebugHighlightColor,
       );
     }
 
     if (this._isSelected) {
       // Selected state appearance
-      // Blue selection stroke (overrides error stroke and/or highlight stroke)
+      // Blue selection stroke (overrides error stroke)
       this.nodeBackground.stroke(
         StateManager.colorScheme.selectedNodeStrokeColor,
       );

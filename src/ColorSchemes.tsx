@@ -58,7 +58,7 @@ export const DarkColorScheme = {
   nodeDragDropShadowOpacity: 0.3,
   nodeDragDropShadowBlur: 10,
 
-  nodeDebugHighlightColor: "#ffee00",
+  nodeDebugHighlightColor: "#7c7401",
 
   transitionDebugColor: "#ffee00",
   transitionSelectedArrowColor: "red",
