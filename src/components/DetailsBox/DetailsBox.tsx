@@ -11,6 +11,7 @@ interface DetailsBoxProps {
   selection: Array<SelectableObject>;
   startNode: NodeWrapper;
   setStartNode: React.Dispatch<React.SetStateAction<NodeWrapper>>;
+  isDebugActive: boolean;
 }
 
 /**
@@ -21,6 +22,8 @@ interface DetailsBoxProps {
  * @param {NodeWrapper} startNode The node currently selected as the start node.
  * @param {React.Dispatch<React.SetStateAction<NodeWrapper>>} setStartNode A function
  * to call for setting the start node to another node.
+ * @param {boolean} isDebugActive if true, we are in debug mode.
+ *
  * @returns
  */
 export default function DetailsBox(props: DetailsBoxProps) {
@@ -44,6 +47,7 @@ export default function DetailsBox(props: DetailsBoxProps) {
       <DetailsBox_TransitionSelection
         key={combinedKey}
         transitions={selectedTransitions}
+        isDebugActive={props.isDebugActive}
       />,
     );
   }
@@ -57,6 +61,7 @@ export default function DetailsBox(props: DetailsBoxProps) {
         nodeWrappers={selectedNodes}
         startNode={props.startNode}
         setStartNode={props.setStartNode}
+        isDebugActive={props.isDebugActive}
       />,
     );
   }
