@@ -1092,6 +1092,7 @@ export default class StateManager {
    */
   private static onKeyDown(ev: KeyboardEvent) {
     //based on the ignore shortcuts implementation in index.tsx
+
     const n = document.activeElement.nodeName;
     if (n === "INPUT" || n === "TEXTAREA") {
       return;
@@ -1106,14 +1107,32 @@ export default class StateManager {
     }
 
     // https://stackoverflow.com/a/77837006
-    if ((ev.metaKey || ev.ctrlKey) && ev.key == "z" && StateManager.safeToAct) {
+    if (
+      (ev.metaKey || ev.ctrlKey) &&
+      ev.key == "z" &&
+      !ev.shiftKey &&
+      StateManager.safeToAct
+    ) {
       ev.preventDefault();
+      UndoRedoManager.undo();
+      return;
+    }
 
-      if (ev.shiftKey) {
-        UndoRedoManager.redo();
-      } else {
-        UndoRedoManager.undo();
-      }
+    /**
+     * When you hit Ctrl+Shift+Z in windows, the key value is Z instead of z. This seems like a useful way
+     * to determine whether shift was held, but it fails because the key value is z in mac. So, we also need to check the combination of key=z and shiftKey.
+     *
+     * The internet is made from duct tape and nightmeres.
+     */
+
+    // ** handle Ctrl+Y and Ctrl+Shift+Z (redo)**
+    if (
+      (ev.metaKey || ev.ctrlKey) &&
+      (ev.key == "Z" || (ev.key == "z" && ev.shiftKey) || ev.key == "y") &&
+      !this.debugActive
+    ) {
+      ev.preventDefault();
+      UndoRedoManager.redo();
       return;
     }
 
@@ -2358,6 +2377,7 @@ export default class StateManager {
     StateManager._nextStateId = 0;
     UndoRedoManager.reset();
   }
+
   static async waitForLeftOrRightKey(): Promise<number> {
     return new Promise((resolve) => {
       function keyHandler(event: KeyboardEvent) {
@@ -2408,10 +2428,26 @@ export default class StateManager {
   public static delay(ms: number): Promise<void> {
     return new Promise((resolve) => setTimeout(resolve, ms));
   }
-  public static async debugMachine(path: any[]) {
+
+  public static unDebugHighlightAllObjects() {
+    StateManager.nodeWrappers.forEach((e: NodeWrapper) => {
+      e.debugUnHighlight();
+    });
+    StateManager.transitions.forEach((e: TransitionWrapper) => {
+      e.debugUnHighlight();
+    });
+  }
+
+  public static debugHighlightObject(object: NodeWrapper | TransitionWrapper) {
+    if (object instanceof NodeWrapper) {
+      object.debugHighlight();
+    } else if (object instanceof TransitionWrapper) {
+      object.debugHighlight();
+    }
+  }
+
+  public static async debugMachine(path: string[]) {
     let LegalMoveFlag = 1;
-    StateManager._selectedBeforeDebug = StateManager.selectedObjects;
-    StateManager.deselectAllObjects();
     let pos = 0;
 
     while (1 == 1) {
@@ -2425,16 +2461,15 @@ export default class StateManager {
       }
       for (const n of StateManager._nodeWrappers) {
         if (n.labelText === path[pos] && LegalMoveFlag == 1) {
-          StateManager.deselectAllObjects();
+          StateManager.unDebugHighlightAllObjects();
           await StateManager.delay(100);
-          StateManager.selectObject(n);
+          StateManager.debugHighlightObject(n);
         }
       }
       let moveVal = await StateManager.waitForLeftOrRightKey();
       LegalMoveFlag = 1;
       if (moveVal == StateManager.debugOptions.KillDebug) {
-        StateManager.deselectAllObjects();
-        StateManager._selectedBeforeDebug.forEach(StateManager.selectObject); //reset selected objects to how it was before debug mode.
+        StateManager.unDebugHighlightAllObjects();
         break;
       } else {
         pos += moveVal;
