@@ -264,6 +264,7 @@ export default class StateManager {
       pointerLength: 10,
       pointerWidth: 10,
       visible: false,
+      listening: false,
     });
     this._transitionLayer.add(this._startStateLine);
 
