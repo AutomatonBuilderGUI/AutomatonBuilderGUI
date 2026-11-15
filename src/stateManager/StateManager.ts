@@ -14,6 +14,7 @@ import UndoRedoManager, { Action, ActionData } from "../UndoRedoManager";
 import { exportAutomatonToImage } from "./ExportFile";
 import { Vector2d } from "konva/lib/types";
 import { KonvaEventObject } from "konva/lib/Node";
+import { handleWheelEvent, getDiagramBounds } from "./ZoomManager";
 import {
   StackableAction,
   SetNodesIsAcceptActionData,
@@ -206,6 +207,17 @@ export default class StateManager {
     this._stage?.draw();
   }
 
+  public static get stage(): Konva.Stage {
+    if (!this._stage) throw new Error("Stage is not initialized.");
+    return this._stage;
+  }
+  public static get nodeWrappers(): ReadonlyArray<NodeWrapper> {
+    return this._nodeWrappers;
+  }
+  public static get transitionWrappers(): ReadonlyArray<TransitionWrapper> {
+    return this._transitionWrappers;
+  }
+
   static notifyListeners() {
     Array.from(StateManager.listeners).forEach((listener) => listener());
   }
@@ -269,7 +281,7 @@ export default class StateManager {
       StateManager.onDoubleClick.call(this, ev),
     );
     this._stage.on("click", (ev) => StateManager.onClick.call(this, ev));
-    this._stage.on("wheel", StateManager.handleWheelEvent);
+    this._stage.on("wheel", handleWheelEvent);
     this._stage.on("dragmove", StateManager.onDragMove);
     this._stage.on("pointerdown", StateManager.onPointerDown);
     this._stage.on("pointermove", StateManager.onPointerMove);
@@ -448,45 +460,6 @@ export default class StateManager {
     StateManager._gridLayer.batchDraw();
   }
 
-  //diagram bounds to know which exact part of the canvas to export
-  private static getDiagramBounds(
-    leftPadding: number = 150,
-    bottomPadding: number = 150,
-    rightPadding: number = 150,
-    topPadding: number = 150,
-  ) {
-    if (
-      !StateManager._nodeWrappers.length &&
-      !StateManager._transitionWrappers.length
-    ) {
-      return { x: 0, y: 0, width: 0, height: 0 };
-    }
-    let minX = Infinity,
-      minY = Infinity,
-      maxX = -Infinity,
-      maxY = -Infinity;
-
-    StateManager._nodeWrappers.forEach((node) => {
-      const { x, y } = node.nodeGroup.position();
-      const radius = NodeWrapper.NodeRadius;
-      minX = Math.min(minX, x - radius);
-      minY = Math.min(minY, y - radius);
-      maxX = Math.max(maxX, x + radius);
-      maxY = Math.max(maxY, y + radius);
-    });
-
-    minX -= leftPadding;
-    minY -= bottomPadding;
-    maxX += rightPadding;
-    maxY += topPadding;
-    return {
-      x: minX,
-      y: minY,
-      width: maxX - minX,
-      height: maxY - minY,
-    };
-  }
-
   /** Exports the diagram as a PNG. Thin wrapper that hands private state to ExportFile. */
   /** Now lives in the ExportFile.ts under Components **/
   public static exportAutomatonToImage() {
@@ -496,7 +469,7 @@ export default class StateManager {
       nodeLayer: StateManager._nodeLayer,
       transitionLayer: StateManager._transitionLayer,
       transitions: StateManager.transitions,
-      bounds: StateManager.getDiagramBounds(),
+      bounds: getDiagramBounds(),
       useDarkMode: StateManager.useDarkMode,
     });
   }
@@ -2102,125 +2075,6 @@ export default class StateManager {
   }
 
   /**
-   * Called when the user uses the mouse scroll wheel.
-   * This causes the state diagram view to be zoomed in or out.
-   * @param ev
-   */
-  private static handleWheelEvent(ev: any) {
-    ev.evt.preventDefault();
-    var oldScale = StateManager._stage.scaleX();
-
-    var pointer = StateManager._stage.getPointerPosition();
-
-    var mousePointer = {
-      x: (pointer.x - StateManager._stage.x()) / oldScale,
-      y: (pointer.y - StateManager._stage.y()) / oldScale,
-    };
-
-    var newScale = ev.evt.deltaY > 0 ? oldScale * 0.9 : oldScale * 1.1;
-    StateManager._stage.scale({ x: newScale, y: newScale });
-
-    var newPos = {
-      x: pointer.x - mousePointer.x * newScale,
-      y: pointer.y - mousePointer.y * newScale,
-    };
-    StateManager._stage.position(newPos);
-    StateManager._stage.batchDraw();
-    StateManager.drawGrid();
-  }
-
-  /**
-   * Resets the state diagram zoom level to 100%.
-   * @returns
-   */
-  public static resetZoom() {
-    if (!StateManager._stage) {
-      console.error("Stage is not initialized.");
-      return;
-    }
-    StateManager._stage.scale({ x: 1, y: 1 });
-    StateManager._stage.position({ x: 0, y: 0 });
-    StateManager._stage.batchDraw();
-    StateManager.drawGrid();
-  }
-
-  /**
-   * Centers the view of the state diagram to the origin.
-   * @returns
-   */
-  public static centerStage() {
-    if (!StateManager._stage) {
-      console.error("Stage is not initialized.");
-      return;
-    }
-    // Calculate the center based on the container dimensions
-    const x =
-      window.innerWidth / 2 -
-      (StateManager._stage.width() / 2) * StateManager._stage.scaleX();
-    const y =
-      window.innerHeight / 2 -
-      (StateManager._stage.height() / 2) * StateManager._stage.scaleY();
-    StateManager._stage.position({ x, y });
-    StateManager.drawGrid();
-    StateManager._stage.batchDraw();
-  }
-
-  /**
-   * Zooms the view in by 10%.
-   * @returns
-   */
-  public static zoomIn() {
-    if (!StateManager._stage) {
-      console.error("Stage is not initialized.");
-      return;
-    }
-    const scaleBy = 1.1; // Increase scale by 10%
-    StateManager.applyZoom(scaleBy);
-  }
-
-  /**
-   * Zooms the view out by 10%.
-   * @returns
-   */
-  public static zoomOut() {
-    if (!StateManager._stage) {
-      console.error("Stage is not initialized.");
-      return;
-    }
-    const scaleBy = 0.9; // Decrease scale by 10%
-    StateManager.applyZoom(scaleBy);
-  }
-
-  /**
-   * Finds the bounding box of the automaton
-   * and scrolls/zooms the screen to it
-   */
-  public static fitAutomatonOnScreen() {
-    const bounds = StateManager.getDiagramBounds(
-      StateManager._stage.width() / 3,
-      50,
-      50,
-      50,
-    );
-    // Based on window size, the smaller scalar is what we need to be scale the zoom by, and then add some padding
-
-    let scale = Math.min(
-      StateManager._stage.width() / bounds.width,
-      StateManager._stage.height() / bounds.height,
-    );
-    const boxCenterX = bounds.x + bounds.width / 2;
-    const boxCenterY = bounds.y + bounds.height / 2;
-    // finally, apply the zoom and center it in the center of the bounding box
-    StateManager._stage.scale({ x: scale, y: scale });
-    StateManager._stage.position({
-      x: StateManager._stage.width() / 2 - boxCenterX * scale,
-      y: StateManager._stage.height() / 2 - boxCenterY * scale,
-    });
-    StateManager._stage.batchDraw();
-    StateManager.drawGrid();
-  }
-
-  /**
    * Clear out the automaton and alphabet
    * then reset state ID to 0
    * then reset action stack
@@ -2315,26 +2169,6 @@ export default class StateManager {
         pos += moveVal;
       }
     }
-  }
-
-  /**
-   * Zooms the view in or out by a given ratio.
-   * @param scaleBy The ratio to scale the view by.
-   */
-  private static applyZoom(scaleBy: number) {
-    const oldScale = StateManager._stage.scaleX();
-    const newScale = oldScale * scaleBy;
-    StateManager._stage.scale({ x: newScale, y: newScale });
-
-    const stageCenterX = StateManager._stage.width() / 2;
-    const stageCenterY = StateManager._stage.height() / 2;
-    const newPos = {
-      x: stageCenterX - (stageCenterX - StateManager._stage.x()) * scaleBy,
-      y: stageCenterY - (stageCenterY - StateManager._stage.y()) * scaleBy,
-    };
-    StateManager._stage.position(newPos);
-    StateManager._stage.batchDraw();
-    StateManager.drawGrid();
   }
 
   /** Returns whether or not all node labels in the automaton are unique. */
@@ -2710,10 +2544,5 @@ export default class StateManager {
   public static redoState() {
     UndoRedoManager.redo();
     return;
-  }
-
-  //StateManager._nodeWrappers is a private property I provided a public getter to access the nodes
-  public static get nodeWrappers(): Array<NodeWrapper> {
-    return [...StateManager._nodeWrappers];
   }
 }

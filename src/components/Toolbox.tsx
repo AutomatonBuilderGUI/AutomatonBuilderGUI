@@ -29,6 +29,13 @@ import {
   BsChatSquareText,
   BsChatSquareTextFill,
 } from "react-icons/bs";
+import {
+  zoomIn,
+  zoomOut,
+  resetZoom,
+  centerStage,
+  fitAutomatonOnScreen,
+} from "../stateManager/ZoomManager";
 import { TbZoomReset } from "react-icons/tb";
 import { GrGrid } from "react-icons/gr";
 import ConfirmationDialog from "./ConfirmationDialog";
@@ -279,35 +286,35 @@ export default function Toolbox(props: React.PropsWithChildren<ToolboxProps>) {
         ></ActionButton>
         {/* Reset Zoom Button */}
         <ActionButton
-          onClick={StateManager.resetZoom}
+          onClick={resetZoom}
           icon={<TbZoomReset />}
           title="Reset Zoom"
           bgColor="bg-blue-500"
         ></ActionButton>
         {/* Fit Automaton on Screen Button */}
         <ActionButton
-          onClick={StateManager.fitAutomatonOnScreen}
+          onClick={fitAutomatonOnScreen}
           icon={<MdOutlineFitScreen />}
           title="Fit Automaton on Screen"
           bgColor="bg-blue-500"
         ></ActionButton>
         {/* Center Stage Button */}
         <ActionButton
-          onClick={StateManager.centerStage}
+          onClick={centerStage}
           icon={<BiReset />}
           title="Center Stage"
           bgColor="bg-green-500"
         ></ActionButton>
         {/* Zoom In Button */}
         <ActionButton
-          onClick={StateManager.zoomIn}
+          onClick={zoomIn}
           icon={<BsZoomIn />}
           title="Zoom In"
           bgColor="bg-blue-500"
         ></ActionButton>
         {/* Zoom Out Button */}
         <ActionButton
-          onClick={StateManager.zoomOut}
+          onClick={zoomOut}
           icon={<BsZoomOut />}
           title="Zoom Out"
           bgColor="bg-blue-500"
