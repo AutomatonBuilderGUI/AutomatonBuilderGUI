@@ -1635,6 +1635,64 @@ export default class StateManager {
     UndoRedoManager.pushAction(removeTransitionAction);
   }
 
+  public static addNodeToComment(comment: CommentRegion, node: NodeWrapper) {
+    if (comment.isNodeInCommentGroup(node)) return;
+
+    let addNodeForward = (data: NodeAndCommentData) => {
+      data.comment.associatedNodes = data.comment.associatedNodes.concat([
+        data.node,
+      ]);
+    };
+
+    let addNodeBackward = (data: NodeAndCommentData) => {
+      data.comment.associatedNodes = data.comment.associatedNodes.filter(
+        (item: NodeWrapper) => {
+          item != data.node;
+        },
+      );
+    };
+
+    let addNodeToCommentAction = new Action(
+      "addNodeToAction",
+      `Add node "${node.labelText}" to comment"`,
+      addNodeForward,
+      addNodeBackward,
+      { comment: comment, node: node },
+    );
+
+    UndoRedoManager.pushAction(addNodeToCommentAction);
+  }
+
+  public static removeNodeFromComment(
+    comment: CommentRegion,
+    node: NodeWrapper,
+  ) {
+    if (!comment.isNodeInCommentGroup(node)) return;
+
+    const removeNodeForward = (data: NodeAndCommentData) => {
+      data.comment.associatedNodes = data.comment.associatedNodes.filter(
+        (item: NodeWrapper) => {
+          item != data.node;
+        },
+      );
+    };
+    const removeNodeBackward = (data: NodeAndCommentData) => {
+      data.comment.associatedNodes = data.comment.associatedNodes.concat([
+        data.node,
+      ]);
+    };
+
+    const removeNodeToCommentAction = new Action(
+      "addNodeToAction",
+      `Add node "${node.labelText}" to comment"`,
+      removeNodeForward,
+      removeNodeBackward,
+      { comment: comment, node: node },
+    );
+
+    UndoRedoManager.pushAction(removeNodeToCommentAction);
+  }
+
   /**
    * Pushes an action to the action stack that adds a new token with an
    * empty symbol to the automaton.
@@ -3211,6 +3269,12 @@ class AddTransitionActionData extends ActionData {
     super();
     this.originalSelected = originalSelected;
   }
+}
+
+class NodeAndCommentData extends ActionData {
+  public node: NodeWrapper;
+
+  public comment: CommentRegion;
 }
 
 /** Holds the data associated with a "remove transition" action. */

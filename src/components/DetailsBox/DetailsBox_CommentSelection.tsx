@@ -4,9 +4,75 @@ import SelectableObject from "../../SelectableObject";
 import StateManager from "../../StateManager";
 import { useActionStack } from "../../utilities/ActionStackUtilities";
 import { CoreListItem, CoreListItem_Left, ListItem } from "../ListItem";
+import NodeWrapper from "../../NodeWrapper";
 
 interface DetailsBox_CommentSelectionProps {
   comments: CommentRegion[];
+}
+
+interface DetailsBox_CommentNodeProps {
+  comments: CommentRegion[];
+  node: NodeWrapper;
+}
+
+function DetailsBox_CommentNode(props: DetailsBox_CommentNodeProps) {
+  const node: NodeWrapper = props.node;
+  const comments: CommentRegion[] = props.comments;
+
+  const allInclude: boolean = comments.every((comment: CommentRegion) => {
+    comment.isNodeInCommentGroup(node);
+  });
+  const noneInclude: boolean = comments.every((comment: CommentRegion) => {
+    !comment.isNodeInCommentGroup(node);
+  });
+
+  const [nodeIsIncluded, setNodeIsIncluded] = useState(
+    noneInclude ? false : allInclude || undefined,
+  );
+
+  let updateNodeIsIncluded = (isIncluded: boolean) => {
+    setNodeIsIncluded(isIncluded);
+
+    if (isIncluded) {
+      comments.forEach((t: CommentRegion) => {
+        if (t.isNodeInCommentGroup(node)) return;
+        StateManager.addNodeToComment(t, node);
+      });
+    } else {
+      comments.forEach((t: CommentRegion) => {
+        if (!t.isNodeInCommentGroup(node)) return;
+        StateManager.removeNodeFromComment(t, node);
+      });
+    }
+  };
+
+  const [_, currentStackLocation] = useActionStack();
+  useEffect(() => {
+    setNodeIsIncluded(noneInclude ? false : allInclude || undefined);
+  }, [currentStackLocation]);
+
+  let includeNodeInput = (
+    <input
+      type="checkbox"
+      id="is-node-grouped"
+      name="is-node-grouped"
+      checked={nodeIsIncluded}
+      ref={(input) => {
+        if (input) {
+          input.indeterminate = nodeIsIncluded === undefined;
+        }
+      }}
+      onChange={(e) => updateNodeIsIncluded(e.target.checked)}
+    ></input>
+  );
+
+  return (
+    <ListItem
+      key={node.id}
+      title={node.labelText}
+      rightContent={includeNodeInput}
+    />
+  );
 }
 
 /**
@@ -65,12 +131,27 @@ export default function DetailsBox_StateSelection(
     ></input>
   );
 
+  let allInsideNodes: NodeWrapper[] = StateManager.nodeWrappers.filter(
+    (node: NodeWrapper) => {
+      return comments.every((comment: CommentRegion) => {
+        return comment.isNodeInCommentArea(node);
+      });
+    },
+  );
+
   return (
     <div className="flex flex-col">
       <div className="font-medium text-2xl mb-2">Comment Region</div>
       <div className="divide-y mb-3">
         <ListItem title="Comment" rightContent={commentTextInput} />
         <ListItem title="Color" rightContent={regionColorInput} />
+      </div>
+
+      <div className="mt-3 ml-1 mb-1 text-left">Associated Nodes</div>
+      <div className="divide-y mb-3">
+        {allInsideNodes.map((node: NodeWrapper) => (
+          <DetailsBox_CommentNode comments={comments} node={node} />
+        ))}
       </div>
     </div>
   );
