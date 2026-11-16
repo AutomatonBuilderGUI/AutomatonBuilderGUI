@@ -12,6 +12,8 @@ import CommentRegion from "../CommentRegion";
 import TransitionWrapper from "../TransitionWrapper";
 import TokenWrapper from "../TokenWrapper";
 
+import SelectableObject from "../SelectableObject";
+
 /** Holds the data associated with a "set nodes is accept node" action. */
 export class SetNodesIsAcceptActionData extends ActionData {
   /** Whether or not the old nodes were an accept node before this action. */
@@ -291,8 +293,18 @@ export class RemoveNodeActionDataMulti extends ActionData {
   /** The comment regions removed in this action. */
   public comments: CommentRegion[] = [];
 
+  /**
+   * The objects that were selected before removal. We need this stored because we otherwise can't tell if a transition was selected.
+   */
+  public originalSelected: SelectableObject[];
+
   /** Whether any of the nodes removed were the start node. */
   public wasStartNode: boolean = false;
+
+  constructor(originalSelected: SelectableObject[]) {
+    super();
+    this.originalSelected = originalSelected;
+  }
 }
 
 /** Holds the data associated with a "set node name" action. */
@@ -317,9 +329,18 @@ export class SetNodeIsStartActionData extends ActionData {
 }
 
 /** Holds the data associated with an "add transition" action. */
+/** Holds the data associated with an "add transition" action. */
 export class AddTransitionActionData extends ActionData {
   /** The transition created in this action. */
   public transition: TransitionWrapper;
+
+  /** Objects that were selected before the transition was added */
+  public originalSelected: SelectableObject[];
+
+  constructor(originalSelected: SelectableObject[]) {
+    super();
+    this.originalSelected = originalSelected;
+  }
 }
 
 /** Holds the data associated with a "remove transition" action. */

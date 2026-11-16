@@ -25,6 +25,10 @@ export default class TransitionWrapper extends SelectableObject {
   isCurved: boolean;
   priority: string;
 
+  /** Private values that store the visual state*/
+  private _isSelected: boolean = false;
+  private _isDebugHighlighted: boolean = false;
+
   /** The node that this transition is coming from. */
   public get sourceNode() {
     return this._sourceNode;
@@ -104,6 +108,17 @@ export default class TransitionWrapper extends SelectableObject {
       lineJoin: "round",
       pointerLength: 10,
       pointerWidth: 10,
+
+      //Custom hitbox for all arrows made via TransitionWrapper
+      hitFunc: function (context: Konva.Context, shape: Konva.Shape) {
+        context.beginPath();
+        const originalStrokeWidth = shape.strokeWidth();
+        //Hitbox area
+        shape.strokeWidth(20);
+        (shape as any)._sceneFunc(context);
+        //set strokeWidth back for drawing purposes
+        shape.strokeWidth(originalStrokeWidth);
+      },
     });
 
     this.labelCenterDebugObject = new Konva.Circle({
@@ -380,9 +395,27 @@ export default class TransitionWrapper extends SelectableObject {
     ) {
       // If shift isn't being held, then clear all previous selection
       if (!ev.evt.shiftKey) {
-        StateManager.deselectAllObjects();
+        StateManager.setSelection([this]);
+      } else {
+        StateManager.addToSelection([this]);
       }
-      StateManager.selectObject(this);
+    }
+  }
+
+  private updateAppearance(): void {
+    if (this._isSelected) {
+      this.arrowObject.fill(
+        StateManager.colorScheme.transitionSelectedArrowColor,
+      );
+      this.arrowObject.stroke(
+        StateManager.colorScheme.transitionSelectedArrowColor,
+      );
+    } else if (this._isDebugHighlighted) {
+      this.arrowObject.fill(StateManager.colorScheme.transitionDebugColor);
+      this.arrowObject.stroke(StateManager.colorScheme.transitionDebugColor);
+    } else {
+      this.arrowObject.fill(StateManager.colorScheme.transitionArrowColor);
+      this.arrowObject.stroke(StateManager.colorScheme.transitionArrowColor);
     }
   }
 
@@ -391,12 +424,8 @@ export default class TransitionWrapper extends SelectableObject {
    * mode, the arrow and labels appear red).
    */
   public select(): void {
-    this.arrowObject.fill(
-      StateManager.colorScheme.transitionSelectedArrowColor,
-    );
-    this.arrowObject.stroke(
-      StateManager.colorScheme.transitionSelectedArrowColor,
-    );
+    this._isSelected = true;
+    this.updateAppearance();
   }
 
   /**
@@ -404,8 +433,24 @@ export default class TransitionWrapper extends SelectableObject {
    * light mode, the arrow and labels appear dark.)
    */
   public deselect(): void {
-    this.arrowObject.fill(StateManager.colorScheme.transitionArrowColor);
-    this.arrowObject.stroke(StateManager.colorScheme.transitionArrowColor);
+    this._isSelected = false;
+    this.updateAppearance();
+  }
+
+  /**
+   * Updates the appearance of the transition to be debug highlighted
+   */
+  public debugHighlight(): void {
+    this._isDebugHighlighted = true;
+    this.updateAppearance();
+  }
+
+  /**
+   * Updates the appearance of the transition to be debug highlighted
+   */
+  public debugUnHighlight(): void {
+    this._isDebugHighlighted = false;
+    this.updateAppearance();
   }
 
   /**

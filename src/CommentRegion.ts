@@ -250,9 +250,10 @@ export default class CommentRegion extends SelectableObject {
     if (StateManager.currentTool === Tool.Select) {
       // If shift isn't being held, then clear all previous selection
       if (!ev.evt.shiftKey) {
-        StateManager.deselectAllObjects();
+        StateManager.setSelection([this]);
+      } else {
+        StateManager.addToSelection([this]);
       }
-      StateManager.selectObject(this);
     }
   }
 
@@ -265,12 +266,12 @@ export default class CommentRegion extends SelectableObject {
       this.nodeGroup.stopDrag();
       return;
     }
-
+    StateManager.blockOtherActions();
     if (!ev.evt.shiftKey && StateManager.selectedObjects.length === 1) {
-      StateManager.deselectAllObjects();
+      StateManager.setSelection([this]);
+    } else {
+      StateManager.addToSelection([this]);
     }
-
-    StateManager.selectObject(this);
     StateManager.startDragCommentsOperation(this.lastPos);
   }
 
@@ -299,6 +300,7 @@ export default class CommentRegion extends SelectableObject {
   public onDragEnd(ev: Konva.KonvaEventObject<MouseEvent>) {
     // prevents calling completeDrag when no cooresponding startDrag was previously called
     if (ev.evt === undefined) return;
+    StateManager.allowOtherActions();
     StateManager.completeDragCommentsOperation(this.nodeGroup.position());
   }
 

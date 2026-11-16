@@ -56,6 +56,7 @@ export default class NodeWrapper extends SelectableObject {
 
   private _isErrorState: boolean = false;
   private _isSelected: boolean = false;
+  private _isDebugHighlighted: boolean = false;
 
   /**
    * Whether or not this node is an accepting node.
@@ -269,9 +270,10 @@ export default class NodeWrapper extends SelectableObject {
     ) {
       // If shift isn't being held, then clear all previous selection
       if (!ev.evt.shiftKey) {
-        StateManager.deselectAllObjects();
+        StateManager.setSelection([this]);
+      } else {
+        StateManager.addToSelection([this]);
       }
-      StateManager.selectObject(this);
     }
   }
 
@@ -284,6 +286,22 @@ export default class NodeWrapper extends SelectableObject {
   /** Marks the node as deselected and updates its appearance accordingly. */
   public deselect() {
     this._isSelected = false;
+    this.updateAppearance();
+  }
+
+  /**
+   * Updates the appearance of the transition to be debug highlighted
+   */
+  public debugHighlight(): void {
+    this._isDebugHighlighted = true;
+    this.updateAppearance();
+  }
+
+  /**
+   * Updates the appearance of the transition to be debug highlighted
+   */
+  public debugUnHighlight(): void {
+    this._isDebugHighlighted = false;
     this.updateAppearance();
   }
 
@@ -424,13 +442,15 @@ export default class NodeWrapper extends SelectableObject {
     ) {
       this.nodeGroup.stopDrag();
     } else if (StateManager.currentTool === Tool.Transitions) {
+      StateManager.blockOtherActions();
       StateManager.startTentativeTransition(this);
     } else if (StateManager.currentTool === Tool.Select) {
+      StateManager.blockOtherActions();
       if (!ev.evt.shiftKey && StateManager.selectedObjects.length === 1) {
-        StateManager.deselectAllObjects();
+        StateManager.setSelection([this]);
+      } else {
+        StateManager.addToSelection([this]);
       }
-      StateManager.selectObject(this);
-
       StateManager.selectedObjects.forEach((obj) => {
         if (obj instanceof NodeWrapper) {
           obj.dragHighlightEffect();
@@ -491,6 +511,7 @@ export default class NodeWrapper extends SelectableObject {
    * and then the movement is added to the action stack.
    */
   public onDragEnd() {
+    StateManager.allowOtherActions();
     this.dragHighlightEffectDisable();
     if (StateManager.currentTool === Tool.States) {
     } else if (
@@ -627,6 +648,14 @@ export default class NodeWrapper extends SelectableObject {
 
       this.errorIcon.visible(true);
       this.errorText.visible(true);
+    }
+
+    if (this._isDebugHighlighted) {
+      // Selected state appearance
+      // Yellw selection stroke (overrides error fill)
+      this.nodeBackground.fill(
+        StateManager.colorScheme.nodeDebugHighlightColor,
+      );
     }
 
     if (this._isSelected) {
