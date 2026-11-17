@@ -38,7 +38,7 @@ import {
   SetTransitionAcceptsTokenData,
 } from "./StackableAction";
 
-import { onKeyDown } from "./inputManager";
+import { onKeyDown } from "./InputManager";
 
 import {
   SerializableAutomaton,
