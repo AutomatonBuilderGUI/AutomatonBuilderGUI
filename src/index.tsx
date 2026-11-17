@@ -220,7 +220,7 @@ function App({ defaultDarkMode }: { defaultDarkMode: boolean }) {
   return (
     <div className={useDarkMode ? "dark" : ""}>
       <NodeView />
-      <div className="flex flex-row h-screen text-center">
+      <div className="flex flex-row h-screen text-center overflow-x-hidden">
         <div className="overflow-y-auto">
           <FloatingPanel heightPolicy="screen" style={{ width: "300px" }}>
             <DetailsBox
@@ -305,15 +305,6 @@ function App({ defaultDarkMode }: { defaultDarkMode: boolean }) {
                   Dark Mode
                 </div>
               </button>
-              <button
-                className="rounded-full p-2 m-1 mx-2 block bg-blue-500 text-white text-center"
-                onClick={toggleActionStack}
-              >
-                <div className="flex flex-row items-center place-content-center mx-2">
-                  <BiUndo size={24} className="mr-1" />
-                  Action Stack
-                </div>
-              </button>
             </div>
             <div className="flex flex-row absolute bottom-6 items-center place-content-center mx-2">
               <BsGithub className="mr-1" />
@@ -340,16 +331,33 @@ function App({ defaultDarkMode }: { defaultDarkMode: boolean }) {
 
         {/*Separates the left and right panels */}
         <div className="grow"></div>
-
-        <FloatingPanel
-          heightPolicy="screen"
+        {/*Animation Panel for action stack*/}
+        <div
+          className="flex flex-row content-top"
           style={{
-            width: "250px",
-            visibility: actionStackVisible ? "visible" : "hidden",
+            translate: actionStackVisible ? 0 : 270,
+            transition: "translate 0.4s",
           }}
         >
-          <DetailsBox_ActionStackViewer />
-        </FloatingPanel>
+          <button
+            className="size-8 mt-5 resize-none"
+            onClick={toggleActionStack}
+          >
+            <div className="size-full content-center rounded-l-xl bg-gray-300/50 dark:text-white backdrop-blur-xl shadow-xl">
+              <BiUndo className="size-6 m-auto" />
+            </div>
+          </button>
+          <FloatingPanel
+            heightPolicy="screen"
+            style={{
+              width: 250,
+              marginLeft: 0,
+              borderTopLeftRadius: 0,
+            }}
+          >
+            <DetailsBox_ActionStackViewer />
+          </FloatingPanel>
+        </div>
       </div>
       {
         <AnimatePresence>
