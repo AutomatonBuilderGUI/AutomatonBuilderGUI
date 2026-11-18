@@ -30,7 +30,15 @@ export function FiveTupleDisplay() {
   return (
     <>
       <div className="text-center">
-        <p>M = (Q, Σ, δ, q0, F)</p>
+        <p>
+          M = (Q, Σ, δ,{" "}
+          {
+            data.states.find((value) => {
+              return data.startState == value.id;
+            }).label
+          }
+          , F)
+        </p>
         <p>
           Q = {"{"}{" "}
           {data.states.map((d, index) => (
@@ -52,17 +60,7 @@ export function FiveTupleDisplay() {
           {"}"}
         </p>
         <p>
-          q0 ={" "}
-          <strong>
-            {
-              data.states.find((value) => {
-                return data.startState == value.id;
-              }).label
-            }
-          </strong>{" "}
-        </p>
-        <p>
-          F ={"{"}{" "}
+          F = {"{ "}
           {data.acceptStates.map((d, index) => (
             <strong key={d}>
               {
