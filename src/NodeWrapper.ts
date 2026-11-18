@@ -439,6 +439,10 @@ export default class NodeWrapper extends SelectableObject {
     ) {
       this.nodeGroup.stopDrag();
     } else if (StateManager.currentTool === Tool.Transitions) {
+      if (StateManager.debugEnabled) {
+        this.nodeGroup.stopDrag();
+        return;
+      }
       StateManager.blockOtherActions();
       StateManager.startTentativeTransition(this);
     } else if (StateManager.currentTool === Tool.Select) {
