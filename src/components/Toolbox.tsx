@@ -50,6 +50,8 @@ import { motion, AnimatePresence } from "framer-motion";
 interface ToolboxProps {
   currentTool: Tool;
   setCurrentTool: React.Dispatch<React.SetStateAction<Tool>>;
+  isDebugActive: boolean;
+  setIsDebugActive: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 interface ActionButtonProps {
@@ -83,6 +85,9 @@ function ActionButton({
  * @param props
  * @param {Tool} props.currentTool The current tool being used.
  * @param {React.Dispatch<React.SetStateAction<Tool>>} props.setCurrentTool A function for setting the current tool.
+ * @param {boolean} isDebugActive whether or now we are in debug mode
+ * @param {React.Dispatch<React.SetStateAction<boolean>>} setIsDebugActive A function for setting debug mode
+ *
  */
 export default function Toolbox(props: React.PropsWithChildren<ToolboxProps>) {
   const [isSnapActive, setIsSnapActive] = useState(
@@ -95,11 +100,6 @@ export default function Toolbox(props: React.PropsWithChildren<ToolboxProps>) {
     StateManager.toggleSnapToGrid();
     setIsSnapActive(!isSnapActive); // Toggle the local UI state
   };
-  const [isDebugActive, setIsDebugActive] = useState(StateManager.debugEnabled);
-  const handleToggleDebug = () => {
-    StateManager.setDebug();
-    setIsDebugActive(!isDebugActive);
-  };
 
   // Function to trigger file input click event
   const handleLoadButtonClick = () => {
@@ -109,8 +109,13 @@ export default function Toolbox(props: React.PropsWithChildren<ToolboxProps>) {
   // functions to handle the clear confierm window popup
   const [isClearDialogVisible, setIsClearDialogVisible] = useState(false);
 
+  const handleToggleDebug = () => {
+    StateManager.setDebug();
+    props.setIsDebugActive(!props.isDebugActive);
+  };
+
   const handleClearMachineClick = () => {
-    if (!isDebugActive) {
+    if (!props.isDebugActive) {
       setIsClearDialogVisible(true);
     }
   };
@@ -128,7 +133,7 @@ export default function Toolbox(props: React.PropsWithChildren<ToolboxProps>) {
 
   const handleUnsavedChangesClick = () => {
     // If its still clean then dont open the window to ask.
-    if (!isDebugActive) {
+    if (!props.isDebugActive) {
       if (StateManager.cleanState()) {
         handleLoadButtonClick();
       } else {
@@ -209,7 +214,7 @@ export default function Toolbox(props: React.PropsWithChildren<ToolboxProps>) {
           title="Add States [A]"
         >
           <div className="flex flex-row items-center place-content-center">
-            {isDebugActive ? (
+            {props.isDebugActive ? (
               <BsPlusCircleFill style={{ color: "red" }} />
             ) : props.currentTool === Tool.States ? (
               <BsPlusCircleFill />
@@ -225,7 +230,7 @@ export default function Toolbox(props: React.PropsWithChildren<ToolboxProps>) {
           title="Add Transitions [T]"
         >
           <div className="flex flex-row items-center place-content-center">
-            {isDebugActive ? (
+            {props.isDebugActive ? (
               <BsNodePlusFill style={{ color: "red" }} />
             ) : props.currentTool === Tool.Transitions ? (
               <BsNodePlusFill />
@@ -261,8 +266,8 @@ export default function Toolbox(props: React.PropsWithChildren<ToolboxProps>) {
         <ActionButton
           onClick={handleToggleDebug}
           icon={<BsBug />}
-          title={isDebugActive ? "Disable debug" : "Enable debug"}
-          bgColor={isDebugActive ? "bg-red-800" : "bg-blue-800"}
+          title={props.isDebugActive ? "Disable debug" : "Enable debug"}
+          bgColor={props.isDebugActive ? "bg-red-800" : "bg-blue-800"}
         ></ActionButton>
 
         <ActionButton
@@ -322,7 +327,7 @@ export default function Toolbox(props: React.PropsWithChildren<ToolboxProps>) {
         {/* Clear Stage No Save Button */}
 
         <div className="flex flex-col items-center mt-4"></div>
-        {!isDebugActive && (
+        {!props.isDebugActive && (
           <ActionButton
             onClick={handleClearMachineClick}
             icon={<BiFileBlank />}

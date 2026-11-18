@@ -10,6 +10,7 @@ interface DetailsBox_StateSelectionProps {
   nodeWrappers: NodeWrapper[];
   startNode: NodeWrapper;
   setStartNode: React.Dispatch<React.SetStateAction<NodeWrapper>>;
+  isDebugActive: boolean;
 }
 
 /**
@@ -20,6 +21,7 @@ interface DetailsBox_StateSelectionProps {
  * @param {NodeWrapper} props.startNode The node currently marked as the start node.
  * @param {React.Dispatch<React.SetStateAction<NodeWrapper>>} props.setStartNode
  * A function for setting the start node.
+ * @param {boolean} props.isDebugActive whether or not we are in debug mode
  * @returns
  */
 export default function DetailsBox_StateSelection(
@@ -47,6 +49,7 @@ export default function DetailsBox_StateSelection(
   };
 
   let updateNodeIsAccept = (isAccept: boolean) => {
+    if (props.isDebugActive) return true;
     setIsAccept(isAccept);
     StackableAction.setNodesIsAccept(nodeWrappers, isAccept);
   };
@@ -63,6 +66,7 @@ export default function DetailsBox_StateSelection(
       className="float-right align-bottom bg-transparent text-right"
       type="text"
       placeholder="State name"
+      disabled={props.isDebugActive}
       value={nodeLabelText}
       onChange={(e) => updateNodeName(e.target.value)}
     ></input>
@@ -73,6 +77,7 @@ export default function DetailsBox_StateSelection(
       id="is-accept-state"
       name="is-accept-state"
       checked={isAccept}
+      disabled={props.isDebugActive}
       ref={(input) => {
         if (input) {
           input.indeterminate = isAccept === undefined;
@@ -82,7 +87,7 @@ export default function DetailsBox_StateSelection(
     ></input>
   );
 
-  let startStateClasses = `${isStartNodeInternal ? "text-gray-700 dark:text-gray-300" : "text-blue-500 dark:text-blue-400 "} flex flex-row items-center`;
+  let startStateClasses = `${isStartNodeInternal || props.isDebugActive ? "text-gray-700 dark:text-gray-300" : "text-blue-500 dark:text-blue-400 "} flex flex-row items-center`;
   return (
     <div className="flex flex-col">
       <div className="font-medium text-2xl mb-2">State</div>
@@ -99,7 +104,7 @@ export default function DetailsBox_StateSelection(
               <button
                 className={startStateClasses}
                 onClick={(_) => StateManager.setNodeIsStart(nw1)}
-                disabled={isStartNodeInternal}
+                disabled={isStartNodeInternal || props.isDebugActive}
               >
                 {isStartNodeInternal
                   ? "Current Start State"

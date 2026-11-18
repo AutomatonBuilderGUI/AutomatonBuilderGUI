@@ -4,14 +4,17 @@ import TransitionWrapper from "../../TransitionWrapper";
 import TokenWrapper from "../../TokenWrapper";
 import { useActionStack } from "../../utilities/ActionStackUtilities";
 import { ListItem } from "../ListItem";
+import Toolbox from "../Toolbox";
 
 interface DetailsBox_TransitionSelectionProps {
   transitions: TransitionWrapper[];
+  isDebugActive: boolean;
 }
 
 interface DetailsBox_TransitionTokenCheckBoxProps {
   transitions: TransitionWrapper[];
   token: TokenWrapper;
+  isDebugActive: boolean;
 }
 
 /**
@@ -22,6 +25,7 @@ interface DetailsBox_TransitionTokenCheckBoxProps {
  * @param {TransitionWrapper[]} props.transitions The transition(s) that this list
  * item corresponds to.
  * @param {TokenWrapper} props.token The token that this list item corresponds to.
+ * @param {boolean} props.isDebugActive Whether or now we are in debug mode
  * @returns
  */
 function DetailsBox_TransitionTokenCheckBox(
@@ -38,6 +42,7 @@ function DetailsBox_TransitionTokenCheckBox(
   );
 
   let updateTokenIsIncluded = (isIncluded: boolean) => {
+    if (props.isDebugActive) return;
     setTokenIsIncluded(isIncluded);
 
     if (isIncluded) {
@@ -64,6 +69,7 @@ function DetailsBox_TransitionTokenCheckBox(
       id="is-epsilon-transition"
       name="is-epsilon-transition"
       checked={tokenIsIncluded}
+      disabled={props.isDebugActive}
       ref={(input) => {
         if (input) {
           input.indeterminate = tokenIsIncluded === undefined;
@@ -87,6 +93,7 @@ function DetailsBox_TransitionTokenCheckBox(
  * @param props
  * @param {TransitionWrapper[]} props.transitios The transition(s) that this editor
  * will modify.
+ * @param {boolean} props.isDebugActive whether or not we are in debug mode
  * @returns
  */
 export default function DetailsBox_TransitionSelection(
@@ -107,6 +114,7 @@ export default function DetailsBox_TransitionSelection(
     noneEpsilon ? false : allEpsilon || undefined,
   );
   let updateIsEpsilonTransition = (isEpsilon: boolean) => {
+    if (props.isDebugActive) return;
     setEpsilonTransition(isEpsilon);
 
     if (isEpsilon) {
@@ -128,6 +136,7 @@ export default function DetailsBox_TransitionSelection(
       id="is-epsilon-transition"
       name="is-epsilon-transition"
       checked={isEpsilonTransition}
+      disabled={props.isDebugActive}
       ref={(input) => {
         if (input) {
           input.indeterminate = isEpsilonTransition === undefined;
@@ -158,7 +167,11 @@ export default function DetailsBox_TransitionSelection(
       <div className="divide-y mb-3">
         <ListItem title="ε" rightContent={transitionUseEpsilonInput} />
         {StateManager.alphabet.map((token) => (
-          <DetailsBox_TransitionTokenCheckBox transitions={tws} token={token} />
+          <DetailsBox_TransitionTokenCheckBox
+            transitions={tws}
+            token={token}
+            isDebugActive={props.isDebugActive}
+          />
         ))}
       </div>
     </div>
