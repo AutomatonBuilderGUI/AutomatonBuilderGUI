@@ -39,8 +39,12 @@ function App({ defaultDarkMode }: { defaultDarkMode: boolean }) {
   const [startNode, setStartNode] = useState(StateManager.startNode);
   const [isLabelUnique, setIsLabelUnique] = useState(true);
   const [areTokensUnique, setAreTokensUnique] = useState(true);
+
+  const [isDebugActive, setIsDebugActive] = useState(StateManager.debugEnabled);
+
   const [_, currentStackLocation] = useActionStack();
   const [testsPanelOpen, setTestsPanelOpen] = useState(false);
+
   // React state and open/close functions for the "Tests" panel
   const toggleTestsPanel = () => {
     setTestsPanelOpen(!testsPanelOpen);
@@ -227,6 +231,7 @@ function App({ defaultDarkMode }: { defaultDarkMode: boolean }) {
               selection={selectedObjects}
               startNode={startNode}
               setStartNode={setStartNode}
+              isDebugActive={isDebugActive}
             />
 
             <div className="max-h-96 overflow-y-auto">
@@ -335,7 +340,12 @@ function App({ defaultDarkMode }: { defaultDarkMode: boolean }) {
         </div>
 
         <FloatingPanel heightPolicy="screen">
-          <Toolbox currentTool={currentTool} setCurrentTool={setCurrentTool} />
+          <Toolbox
+            currentTool={currentTool}
+            setCurrentTool={setCurrentTool}
+            isDebugActive={isDebugActive}
+            setIsDebugActive={setIsDebugActive}
+          />
         </FloatingPanel>
 
         {/*Separates the left and right panels */}
