@@ -20,10 +20,10 @@ function DetailsBox_CommentNode(props: DetailsBox_CommentNodeProps) {
   const comments: CommentRegion[] = props.comments;
 
   const allInclude: boolean = comments.every((comment: CommentRegion) => {
-    comment.isNodeInCommentGroup(node);
+    return comment.isNodeInCommentGroup(node);
   });
   const noneInclude: boolean = comments.every((comment: CommentRegion) => {
-    !comment.isNodeInCommentGroup(node);
+    return !comment.isNodeInCommentGroup(node);
   });
 
   const [nodeIsIncluded, setNodeIsIncluded] = useState(
@@ -54,8 +54,8 @@ function DetailsBox_CommentNode(props: DetailsBox_CommentNodeProps) {
   let includeNodeInput = (
     <input
       type="checkbox"
-      id="is-node-grouped"
-      name="is-node-grouped"
+      id="is-epsilon-transition"
+      name="is-epsilon-transition"
       checked={nodeIsIncluded}
       ref={(input) => {
         if (input) {

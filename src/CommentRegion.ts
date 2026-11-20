@@ -26,7 +26,7 @@ export default class CommentRegion extends SelectableObject {
 
   public nodeGroup: Konva.Group;
 
-  public associatedNodes: NodeWrapper[] = [];
+  private _associatedNodes: NodeWrapper[] = [];
 
   /** The last position of the comment before being dragged */
   private lastPos: Vector2d;
@@ -272,7 +272,7 @@ export default class CommentRegion extends SelectableObject {
     StateManager.blockOtherActions();
     let additionalSelection: SelectableObject[] = Array.of<SelectableObject>(
       this,
-    ).concat(this.associatedNodes);
+    ).concat(this._associatedNodes);
     if (!ev.evt.shiftKey && StateManager.selectedObjects.length === 1) {
       StateManager.setSelection(additionalSelection);
     } else {
@@ -310,10 +310,35 @@ export default class CommentRegion extends SelectableObject {
     StateManager.completeDragCommentsOperation(this.nodeGroup.position());
   }
 
-  public isNodeInCommentGroup(node: NodeWrapper): boolean {
-    return this.associatedNodes.indexOf(node) != -1;
+  /**
+   * Adds a node to the comment group. THIS IS NOT UNDO-REDO SAFE
+   * @param node
+   */
+  public addNodeToCommentGroup(node: NodeWrapper) {
+    this._associatedNodes.push(node);
   }
 
+  /**
+   * Adds a node to the comment group. THIS IS NOT UNDO-REDO SAFE
+   * @param node
+   */
+  public removeNodeFromCommentGroup(node: NodeWrapper) {
+    this._associatedNodes = this._associatedNodes.filter(
+      (item: NodeWrapper) => item != node,
+    );
+  }
+
+  /** Gets a copy of the array of associated nodes. */
+  public get associatedNodes(): NodeWrapper[] {
+    return [...this._associatedNodes];
+  }
+
+  /** returns true if the node is in this comment's group */
+  public isNodeInCommentGroup(node: NodeWrapper): boolean {
+    return this._associatedNodes.indexOf(node) != -1;
+  }
+
+  /** returns true if the node is within the comments box.*/
   public isNodeInCommentArea(node: NodeWrapper): boolean {
     let nodeCoords: Vector2d = node.nodeGroup.position();
 

@@ -1639,17 +1639,11 @@ export default class StateManager {
     if (comment.isNodeInCommentGroup(node)) return;
 
     let addNodeForward = (data: NodeAndCommentData) => {
-      data.comment.associatedNodes = data.comment.associatedNodes.concat([
-        data.node,
-      ]);
+      data.comment.addNodeToCommentGroup(data.node);
     };
 
     let addNodeBackward = (data: NodeAndCommentData) => {
-      data.comment.associatedNodes = data.comment.associatedNodes.filter(
-        (item: NodeWrapper) => {
-          item != data.node;
-        },
-      );
+      data.comment.removeNodeFromCommentGroup(data.node);
     };
 
     let addNodeToCommentAction = new Action(
@@ -1670,16 +1664,10 @@ export default class StateManager {
     if (!comment.isNodeInCommentGroup(node)) return;
 
     const removeNodeForward = (data: NodeAndCommentData) => {
-      data.comment.associatedNodes = data.comment.associatedNodes.filter(
-        (item: NodeWrapper) => {
-          item != data.node;
-        },
-      );
+      data.comment.removeNodeFromCommentGroup(data.node);
     };
     const removeNodeBackward = (data: NodeAndCommentData) => {
-      data.comment.associatedNodes = data.comment.associatedNodes.concat([
-        data.node,
-      ]);
+      data.comment.addNodeToCommentGroup(data.node);
     };
 
     const removeNodeToCommentAction = new Action(
@@ -2926,6 +2914,25 @@ export default class StateManager {
       y: endPos.y - startPos.y,
     };
 
+    let formerMembership: Map<CommentRegion, NodeWrapper[]> = new Map();
+    StateManager._commentRegions.forEach((comment: CommentRegion) => {
+      formerMembership.set(
+        comment,
+        this.selectedObjects
+          .filter((e: SelectableObject) => e instanceof NodeWrapper)
+          .filter(
+            (node: NodeWrapper) =>
+              !comment.isNodeInCommentArea(node) &&
+              comment.isNodeInCommentGroup(node),
+          ),
+      );
+    });
+    formerMembership.forEach((states: NodeWrapper[], comment: CommentRegion) =>
+      states.forEach((state: NodeWrapper) =>
+        comment.removeNodeFromCommentGroup(state),
+      ),
+    );
+
     let moveStatesForward = (data: MoveStatesActionData) => {
       data.states.forEach((state) => {
         state.setPosition({
@@ -2937,6 +2944,13 @@ export default class StateManager {
           this.updateStartNodePosition();
         }
       });
+      data.formerMembership.forEach(
+        (states: NodeWrapper[], comment: CommentRegion) =>
+          states.forEach((state: NodeWrapper) =>
+            comment.removeNodeFromCommentGroup(state),
+          ),
+      );
+
       StateManager.updateTransitions();
     };
 
@@ -2950,8 +2964,13 @@ export default class StateManager {
         if (StateManager.startNode === state) {
           this.updateStartNodePosition();
         }
+        data.formerMembership.forEach(
+          (value: NodeWrapper[], key: CommentRegion) =>
+            value.forEach((state: NodeWrapper) =>
+              key.removeNodeFromCommentGroup(state),
+            ),
+        );
       });
-      StateManager.updateTransitions();
     };
 
     let moveStatesString = "Move ";
@@ -2967,7 +2986,11 @@ export default class StateManager {
       moveStatesString,
       moveStatesForward,
       moveStatesBackward,
-      { delta: delta, states: [...this.selectedObjects] },
+      {
+        delta: delta,
+        states: [...this.selectedObjects],
+        formerMembership: formerMembership,
+      },
       true,
     );
 
@@ -3046,17 +3069,26 @@ export default class StateManager {
   }
 
   public static endResizeCommentOperation() {
-    let endSize = StateManager._resizeComment.getSize();
-    let endPos = StateManager._resizeComment.konvaObject.position();
+    let resizedComment: CommentRegion = StateManager._resizeComment;
+
+    let endSize = resizedComment.getSize();
+    let endPos = resizedComment.konvaObject.position();
+
+    let lostNodes: NodeWrapper[] = resizedComment.associatedNodes.filter(
+      (e: NodeWrapper) => !resizedComment.isNodeInCommentArea(e),
+    );
+    lostNodes.forEach((e) => resizedComment.removeNodeFromCommentGroup(e));
 
     let resizeCommentForward = (data: ResizeCommentActionData) => {
       data.comment.konvaObject.position(endPos);
       data.comment.setSize(endSize);
+      data.lostNodes.forEach((e) => data.comment.removeNodeFromCommentGroup(e));
     };
 
     let resizeCommentBackward = (data: ResizeCommentActionData) => {
       data.comment.konvaObject.position(data.oldPos);
       data.comment.setSize(data.oldSize);
+      data.lostNodes.forEach((e) => data.comment.addNodeToCommentGroup(e));
     };
 
     let resizeCommentAction = new Action(
@@ -3068,6 +3100,7 @@ export default class StateManager {
         oldPos: StateManager._resizeCommentStartPosition,
         oldSize: StateManager._resizeCommentStartSize,
         comment: StateManager._resizeComment,
+        lostNodes: lostNodes,
       },
       true,
     );
@@ -3222,6 +3255,9 @@ class MoveStatesActionData extends ActionData {
 
   /** The nodes moved in this action. */
   public states: Array<NodeWrapper>;
+
+  /** The  */
+  public formerMembership: Map<CommentRegion, NodeWrapper[]>;
 }
 
 /** Holds the data associated with a "set node name" action. */
@@ -3411,6 +3447,8 @@ class ResizeCommentActionData extends ActionData {
 
   /** The comment being resized in this action. */
   public comment: CommentRegion;
+
+  public lostNodes: NodeWrapper[];
 }
 
 /** Holds the data associated with a "change selection" action */
