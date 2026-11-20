@@ -4,6 +4,7 @@ import { Tool } from "./Tool";
 import { Vector2d } from "konva/lib/types";
 import SelectableObject from "./SelectableObject";
 import { v4 as uuidv4 } from "uuid";
+import TransitionWrapper from "./TransitionWrapper";
 
 /**
  * The class that holds node information (label, start node status, etc)
@@ -486,8 +487,8 @@ export default class NodeWrapper extends SelectableObject {
       const allOtherSelected = StateManager.selectedObjects.filter(
         (i) => i !== this,
       );
-      allOtherSelected.forEach((obj) => {
-        if (obj instanceof SelectableObject) {
+      allOtherSelected.forEach((obj: SelectableObject) => {
+        if (!(obj instanceof TransitionWrapper)) {
           obj.konvaObject.move({
             x: delta.x,
             y: delta.y,

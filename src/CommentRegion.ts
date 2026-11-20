@@ -5,6 +5,8 @@ import { Vector2d } from "konva/lib/types";
 import SelectableObject from "./SelectableObject";
 import { v4 as uuidv4 } from "uuid";
 
+import TransitionWrapper from "./TransitionWrapper";
+
 export default class CommentRegion extends SelectableObject {
   // make the color configurable later
   public static readonly CornerRadius = 8;
@@ -287,12 +289,14 @@ export default class CommentRegion extends SelectableObject {
       const allOtherSelected = StateManager.selectedObjects.filter(
         (i) => i instanceof SelectableObject && i !== this,
       );
-      allOtherSelected.forEach((obj) => {
-        obj.konvaObject.move({
-          x: delta.x,
-          y: delta.y,
-        });
-        obj.konvaObject.fire("move", ev);
+      allOtherSelected.forEach((obj: SelectableObject) => {
+        if (!(obj instanceof TransitionWrapper)) {
+          obj.konvaObject.move({
+            x: delta.x,
+            y: delta.y,
+          });
+          obj.konvaObject.fire("move", ev);
+        }
       });
     }
   }

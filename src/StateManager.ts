@@ -2910,7 +2910,12 @@ export default class StateManager {
       moveStatesString,
       moveStatesForward,
       moveStatesBackward,
-      { delta: delta, states: [...this.selectedObjects] },
+      {
+        delta: delta,
+        states: this.selectedObjects.filter(
+          (obj: SelectableObject) => !(obj instanceof TransitionWrapper),
+        ),
+      },
       true,
     );
 
@@ -2968,7 +2973,14 @@ export default class StateManager {
       `Move ${this.selectedObjects.length} Comment${maybeS}`,
       moveCommentsForward,
       moveCommentsBackward,
-      { delta: delta, comments: [...this.selectedObjects] },
+      {
+        delta: delta,
+        comments: [
+          this.selectedObjects.filter(
+            (obj: SelectableObject) => !(obj instanceof TransitionWrapper),
+          ),
+        ],
+      },
       true,
     );
 
