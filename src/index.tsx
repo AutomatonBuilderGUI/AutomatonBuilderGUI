@@ -15,7 +15,9 @@ import {
   BsGithub,
   BsClock,
   BsLink,
+  BsWrench,
 } from "react-icons/bs";
+import { FiveTupleDisplay } from "./components/FiveTuple";
 import { BiUndo } from "react-icons/bi";
 import TestStringWindow from "./components/TestStringWindow";
 import InformationBox, {
@@ -39,8 +41,12 @@ function App({ defaultDarkMode }: { defaultDarkMode: boolean }) {
   const [startNode, setStartNode] = useState(StateManager.startNode);
   const [isLabelUnique, setIsLabelUnique] = useState(true);
   const [areTokensUnique, setAreTokensUnique] = useState(true);
+
+  const [isDebugActive, setIsDebugActive] = useState(StateManager.debugEnabled);
+
   const [_, currentStackLocation] = useActionStack();
   const [testsPanelOpen, setTestsPanelOpen] = useState(false);
+
   // React state and open/close functions for the "Tests" panel
   const toggleTestsPanel = () => {
     setTestsPanelOpen(!testsPanelOpen);
@@ -175,6 +181,11 @@ function App({ defaultDarkMode }: { defaultDarkMode: boolean }) {
   const closeGitWindow = () => {
     setconfigGitWindowOpen(false);
   };
+  // 5 tuple display tab
+  const [showTupleTab, setTupleTab] = useState(false);
+  const toggleTupleTab = () => {
+    setTupleTab(!showTupleTab);
+  };
 
   // React state and enable/disable functions for dark mode.
   const [useDarkMode, setDarkMode] = useState(defaultDarkMode);
@@ -220,13 +231,14 @@ function App({ defaultDarkMode }: { defaultDarkMode: boolean }) {
   return (
     <div className={useDarkMode ? "dark" : ""}>
       <NodeView />
-      <div className="flex flex-row h-screen text-center">
+      <div className="flex flex-row h-screen text-center overflow-x-hidden">
         <div className="overflow-y-auto">
           <FloatingPanel heightPolicy="screen" style={{ width: "300px" }}>
             <DetailsBox
               selection={selectedObjects}
               startNode={startNode}
               setStartNode={setStartNode}
+              isDebugActive={isDebugActive}
             />
 
             <div className="max-h-96 overflow-y-auto">
@@ -306,6 +318,15 @@ function App({ defaultDarkMode }: { defaultDarkMode: boolean }) {
                 </div>
               </button>
               <button
+                className="rounded-full p-2 m-1 mx-2 block bg-gray-500 text-white text-center disabled:opacity-50 disabled:cursor-not-allowed"
+                onClick={toggleTupleTab}
+              >
+                <div className="flex flex-row items-center place-content-center mx-2">
+                  <BsWrench className="mr-1" />
+                  5-tuple definition
+                </div>
+              </button>
+              <button
                 className="rounded-full p-2 m-1 mx-2 block bg-blue-500 text-white text-center"
                 onClick={toggleActionStack}
               >
@@ -335,21 +356,43 @@ function App({ defaultDarkMode }: { defaultDarkMode: boolean }) {
         </div>
 
         <FloatingPanel heightPolicy="screen">
-          <Toolbox currentTool={currentTool} setCurrentTool={setCurrentTool} />
+          <Toolbox
+            currentTool={currentTool}
+            setCurrentTool={setCurrentTool}
+            isDebugActive={isDebugActive}
+            setIsDebugActive={setIsDebugActive}
+          />
         </FloatingPanel>
 
         {/*Separates the left and right panels */}
         <div className="grow"></div>
-
-        <FloatingPanel
-          heightPolicy="screen"
+        {/*Animation Panel for action stack*/}
+        <div
+          className="flex flex-row content-top"
           style={{
-            width: "250px",
-            visibility: actionStackVisible ? "visible" : "hidden",
+            translate: actionStackVisible ? 0 : 270,
+            transition: "translate 0.4s",
           }}
         >
-          <DetailsBox_ActionStackViewer />
-        </FloatingPanel>
+          <button
+            className="size-8 mt-5 resize-none"
+            onClick={toggleActionStack}
+          >
+            <div className="size-full content-center rounded-l-xl bg-gray-300/50 dark:text-white backdrop-blur-xl shadow-xl">
+              <BiUndo className="size-6 m-auto" />
+            </div>
+          </button>
+          <FloatingPanel
+            heightPolicy="screen"
+            style={{
+              width: 250,
+              marginLeft: 0,
+              borderTopLeftRadius: 0,
+            }}
+          >
+            <DetailsBox_ActionStackViewer />
+          </FloatingPanel>
+        </div>
       </div>
       {
         <AnimatePresence>
@@ -387,6 +430,14 @@ function App({ defaultDarkMode }: { defaultDarkMode: boolean }) {
                 </li>
               </BuildGitInfo>
             </ul>
+          </ClosableModalWindow>
+        )}
+      </div>
+
+      <div>
+        {showTupleTab && (
+          <ClosableModalWindow title="5-tuple" close={toggleTupleTab}>
+            <FiveTupleDisplay />
           </ClosableModalWindow>
         )}
       </div>
