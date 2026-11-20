@@ -54,8 +54,8 @@ function DetailsBox_CommentNode(props: DetailsBox_CommentNodeProps) {
   let includeNodeInput = (
     <input
       type="checkbox"
-      id="is-epsilon-transition"
-      name="is-epsilon-transition"
+      id="is-node-associated"
+      name="is-node-associated"
       checked={nodeIsIncluded}
       ref={(input) => {
         if (input) {
@@ -134,7 +134,7 @@ export default function DetailsBox_StateSelection(
   let allInsideNodes: NodeWrapper[] = StateManager.nodeWrappers.filter(
     (node: NodeWrapper) => {
       return comments.every((comment: CommentRegion) => {
-        return comment.isNodeInCommentArea(node);
+        return comment.isNodeInRect(node);
       });
     },
   );

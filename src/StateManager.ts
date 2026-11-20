@@ -2933,8 +2933,7 @@ export default class StateManager {
           .filter((e: SelectableObject) => e instanceof NodeWrapper)
           .filter(
             (node: NodeWrapper) =>
-              !comment.isNodeInCommentArea(node) &&
-              comment.isNodeInCommentGroup(node),
+              !comment.isNodeInRect(node) && comment.isNodeInCommentGroup(node),
           ),
       );
     });
@@ -3042,6 +3041,7 @@ export default class StateManager {
           y: comment.nodeGroup.position().y + delta.y,
         });
       });
+      StateManager.updateTransitions();
     };
 
     let moveCommentsBackward = (data: MoveCommentsActionData) => {
@@ -3050,6 +3050,7 @@ export default class StateManager {
           x: comment.nodeGroup.position().x - delta.x,
           y: comment.nodeGroup.position().y - delta.y,
         });
+        StateManager.updateTransitions();
       });
     };
 
@@ -3086,7 +3087,7 @@ export default class StateManager {
     let endPos = resizedComment.konvaObject.position();
 
     let lostNodes: NodeWrapper[] = resizedComment.associatedNodes.filter(
-      (e: NodeWrapper) => !resizedComment.isNodeInCommentArea(e),
+      (e: NodeWrapper) => !resizedComment.isNodeInRect(e),
     );
     lostNodes.forEach((e) => resizedComment.removeNodeFromCommentGroup(e));
 
@@ -3267,7 +3268,7 @@ class MoveStatesActionData extends ActionData {
   /** The nodes moved in this action. */
   public states: Array<NodeWrapper>;
 
-  /** The  */
+  /** a mapping from comment regons to formerlly associated nodes that were moved out by this action */
   public formerMembership: Map<CommentRegion, NodeWrapper[]>;
 }
 
@@ -3459,6 +3460,7 @@ class ResizeCommentActionData extends ActionData {
   /** The comment being resized in this action. */
   public comment: CommentRegion;
 
+  /** Nodes the were associated with the comment, but lost association because the resizing caused them to be left outside */
   public lostNodes: NodeWrapper[];
 }
 

@@ -339,7 +339,7 @@ export default class CommentRegion extends SelectableObject {
   }
 
   /** returns true if the node is within the comments box.*/
-  public isNodeInCommentArea(node: NodeWrapper): boolean {
+  public isNodeInRect(node: NodeWrapper): boolean {
     let nodeCoords: Vector2d = node.nodeGroup.position();
 
     console.log("comment left: " + this.nodeGroup.position().x);
