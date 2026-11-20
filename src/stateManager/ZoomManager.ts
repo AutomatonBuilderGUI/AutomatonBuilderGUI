@@ -1,34 +1,6 @@
 import StateManager from "./StateManager";
 import NodeWrapper from "../NodeWrapper";
 /**
- * Called when the user uses the mouse scroll wheel.
- * This causes the state diagram view to be zoomed in or out.
- * @param ev
- */
-export function handleWheelEvent(ev: any) {
-  ev.evt.preventDefault();
-  const oldScale = StateManager.stage.scaleX();
-
-  var pointer = StateManager.stage.getPointerPosition();
-
-  var mousePointer = {
-    x: (pointer.x - StateManager.stage.x()) / oldScale,
-    y: (pointer.y - StateManager.stage.y()) / oldScale,
-  };
-
-  var newScale = ev.evt.deltaY > 0 ? oldScale * 0.9 : oldScale * 1.1;
-  StateManager.stage.scale({ x: newScale, y: newScale });
-
-  var newPos = {
-    x: pointer.x - mousePointer.x * newScale,
-    y: pointer.y - mousePointer.y * newScale,
-  };
-  StateManager.stage.position(newPos);
-  StateManager.stage.batchDraw();
-  StateManager.drawGrid();
-}
-
-/**
  * Resets the state diagram zoom level to 100%.
  * @returns
  */

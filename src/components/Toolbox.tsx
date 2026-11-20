@@ -8,7 +8,7 @@ import {
   uploadJSON,
   downloadJSON,
   loadAutomaton,
-} from "../stateManager/ExportFile";
+} from "../stateManager/FileIO";
 import {
   BsCursor,
   BsCursorFill,

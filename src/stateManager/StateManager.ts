@@ -11,10 +11,11 @@ import DFATransition from "automaton-kit/lib/dfa/DFATransition";
 import DFAState from "automaton-kit/lib/dfa/DFAState";
 import { convertIDtoLabelOrSymbol } from "../utilities/AutomatonUtilities";
 import UndoRedoManager, { Action, ActionData } from "../UndoRedoManager";
-import { exportAutomatonToImage } from "./ExportFile";
+import { exportAutomatonToImage } from "./FileIO";
 import { Vector2d } from "konva/lib/types";
 import { KonvaEventObject } from "konva/lib/Node";
-import { handleWheelEvent, getDiagramBounds } from "./ZoomManager";
+import { getDiagramBounds } from "./ZoomManager";
+import { handleWheelEvent } from "./InputManager";
 import {
   StackableAction,
   SetNodesIsAcceptActionData,
