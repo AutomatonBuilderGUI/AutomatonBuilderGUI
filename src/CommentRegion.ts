@@ -4,6 +4,7 @@ import { Tool } from "./Tool";
 import { Vector2d } from "konva/lib/types";
 import SelectableObject from "./SelectableObject";
 import { v4 as uuidv4 } from "uuid";
+import NodeWrapper from "./NodeWrapper";
 
 export default class CommentRegion extends SelectableObject {
   // make the color configurable later
@@ -24,6 +25,8 @@ export default class CommentRegion extends SelectableObject {
   private regionRect: Konva.Rect;
 
   public nodeGroup: Konva.Group;
+
+  private _associatedNodes: NodeWrapper[] = [];
 
   /** The last position of the comment before being dragged */
   private lastPos: Vector2d;
@@ -267,10 +270,13 @@ export default class CommentRegion extends SelectableObject {
       return;
     }
     StateManager.blockOtherActions();
+    let additionalSelection: SelectableObject[] = Array.of<SelectableObject>(
+      this,
+    ).concat(this._associatedNodes);
     if (!ev.evt.shiftKey && StateManager.selectedObjects.length === 1) {
-      StateManager.setSelection([this]);
+      StateManager.setSelection(additionalSelection);
     } else {
-      StateManager.addToSelection([this]);
+      StateManager.addToSelection(additionalSelection);
     }
     StateManager.startDragCommentsOperation(this.lastPos);
   }
@@ -302,6 +308,63 @@ export default class CommentRegion extends SelectableObject {
     if (ev.evt === undefined) return;
     StateManager.allowOtherActions();
     StateManager.completeDragCommentsOperation(this.nodeGroup.position());
+  }
+
+  /**
+   * Adds a node to the comment group. THIS IS NOT UNDO-REDO SAFE
+   * @param node
+   */
+  public addNodeToCommentGroup(node: NodeWrapper) {
+    this._associatedNodes = this._associatedNodes.concat([node]);
+  }
+
+  /**
+   * Adds a node to the comment group. THIS IS NOT UNDO-REDO SAFE
+   * @param node
+   */
+  public removeNodeFromCommentGroup(node: NodeWrapper) {
+    this._associatedNodes = this._associatedNodes.filter(
+      (item: NodeWrapper) => item != node,
+    );
+  }
+
+  /** Gets a copy of the array of associated nodes. */
+  public get associatedNodes(): NodeWrapper[] {
+    return [...this._associatedNodes];
+  }
+
+  /** returns true if the node is in this comment's group */
+  public isNodeInCommentGroup(node: NodeWrapper): boolean {
+    return this._associatedNodes.indexOf(node) != -1;
+  }
+
+  /** returns true if the node is within the comments box.*/
+  public isNodeInRect(node: NodeWrapper): boolean {
+    let nodeCoords: Vector2d = node.nodeGroup.position();
+
+    console.log("comment left: " + this.nodeGroup.position().x);
+    console.log("node x: " + nodeCoords.x);
+    console.log(
+      "comment right" +
+        +this.nodeGroup.position().x +
+        this.nodeGroup.width().valueOf(),
+    );
+    console.log("comment top: " + +this.nodeGroup.position().y);
+    console.log("node y: " + nodeCoords.y);
+    console.log(
+      "comment bottom" +
+        +this.nodeGroup.position().y +
+        this.nodeGroup.height().valueOf(),
+    );
+
+    return (
+      this.nodeGroup.position().x <= nodeCoords.x &&
+      +this.nodeGroup.position().x + this.regionRect.width().valueOf() >=
+        nodeCoords.x &&
+      +this.nodeGroup.position().y <= nodeCoords.y &&
+      +this.nodeGroup.position().y + this.regionRect.height().valueOf() >=
+        nodeCoords.y
+    );
   }
 
   public resize() {
