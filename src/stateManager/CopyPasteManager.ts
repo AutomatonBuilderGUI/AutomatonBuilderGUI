@@ -3,6 +3,9 @@ import NodeWrapper from "../NodeWrapper";
 import { PasteActionData, CutActionData } from "./StackableAction";
 import UndoRedoManager, { Action } from "../UndoRedoManager";
 import TransitionWrapper from "../TransitionWrapper";
+import SelectableObject from "../SelectableObject";
+
+let _clipboard: SelectableObject[] = [];
 
 /** Returns the transitions whose source and destination are both in `nodes`. */
 function transitionsBetween(nodes: NodeWrapper[]): TransitionWrapper[] {
@@ -17,10 +20,7 @@ export function copySelectedObjects() {
     (obj): obj is NodeWrapper => obj instanceof NodeWrapper,
   );
 
-  StateManager.clipboard = [
-    ...selectedNodes,
-    ...transitionsBetween(selectedNodes),
-  ];
+  _clipboard = [...selectedNodes, ...transitionsBetween(selectedNodes)];
 }
 
 /** Pastes the copied objects, including transitions between pasted nodes. */
@@ -28,7 +28,7 @@ export function pasteClipboardObjects(
   offsetX: number = 20,
   offsetY: number = 20,
 ) {
-  const clipboard = StateManager.clipboard;
+  const clipboard = _clipboard;
   if (!clipboard.length) {
     console.warn("Clipboard is empty, nothing to paste.");
     return;
@@ -136,7 +136,7 @@ export function cutSelectedObjects() {
 
   // Only nodes, selected transitions, and transitions fully inside the
   // selection go on the clipboard
-  StateManager.clipboard = [
+  _clipboard = [
     ...selectedNodes,
     ...Array.from(new Set([...selectedTransitions, ...internalTransitions])),
   ];
