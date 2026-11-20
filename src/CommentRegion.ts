@@ -315,7 +315,7 @@ export default class CommentRegion extends SelectableObject {
    * @param node
    */
   public addNodeToCommentGroup(node: NodeWrapper) {
-    this._associatedNodes.push(node);
+    this._associatedNodes = this._associatedNodes.concat([node]);
   }
 
   /**

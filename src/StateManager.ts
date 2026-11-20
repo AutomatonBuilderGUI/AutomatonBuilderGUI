@@ -2001,12 +2001,22 @@ export default class StateManager {
 
   /** Sets the selection in a way supported by the UndoRedoManager */
   public static setSelection(objs: SelectableObject[]) {
+    const uniqueObjs: SelectableObject[] = []; //protect against double-counting an object.
+    objs.forEach((obj: SelectableObject) => {
+      if (uniqueObjs.indexOf(obj) == -1) {
+        uniqueObjs.push(obj);
+      }
+    });
+
     if (
-      objs.concat(StateManager.selectedObjects).every((e: SelectableObject) => {
-        return (
-          objs.indexOf(e) > -1 && StateManager.selectedObjects.indexOf(e) > -1
-        );
-      })
+      uniqueObjs
+        .concat(StateManager.selectedObjects)
+        .every((e: SelectableObject) => {
+          return (
+            uniqueObjs.indexOf(e) > -1 &&
+            StateManager.selectedObjects.indexOf(e) > -1
+          );
+        })
     ) {
       return; //if the selection is the same, we don't do anything.
     }
@@ -2037,7 +2047,7 @@ export default class StateManager {
       "Change Selection",
       forward,
       backward,
-      { oldSelection: StateManager._selectedObjects, newSelection: objs },
+      { oldSelection: StateManager._selectedObjects, newSelection: uniqueObjs },
       true,
     );
     UndoRedoManager.pushAction(action);
