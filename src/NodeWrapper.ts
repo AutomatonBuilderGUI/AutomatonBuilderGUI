@@ -458,7 +458,7 @@ export default class NodeWrapper extends SelectableObject {
         }
       });
 
-      StateManager.startDragStatesOperation(this.lastPos);
+      StateManager.startDragElementsOperation(this.lastPos);
     }
   }
 
@@ -499,14 +499,6 @@ export default class NodeWrapper extends SelectableObject {
   }
 
   /**
-   * Sets the node to have a new position.
-   * @param position The new position to set the node to.
-   */
-  public setPosition(position: Vector2d) {
-    this.nodeGroup.position(position);
-  }
-
-  /**
    * Called when the user releases a node from being dragged.
    * The node's position is snapped to the grid, if "Snap to Grid" is enabled,
    * and then the movement is added to the action stack.
@@ -538,7 +530,7 @@ export default class NodeWrapper extends SelectableObject {
         Math.abs(this.lastSnappedPos.y - snappedPos.y) > 1e-5
       ) {
         this.lastSnappedPos = snappedPos;
-        StateManager.completeDragStatesOperation(this.nodeGroup.position());
+        StateManager.completeDragElementsOperation(this.nodeGroup.position());
       }
     } else if (StateManager.currentTool === Tool.Transitions) {
       // Handling specific to ending a tentative transition
@@ -550,7 +542,7 @@ export default class NodeWrapper extends SelectableObject {
           obj.dragHighlightEffectDisable();
         }
       });
-      StateManager.completeDragStatesOperation(this.nodeGroup.position());
+      StateManager.completeDragElementsOperation(this.nodeGroup.position());
     }
   }
 

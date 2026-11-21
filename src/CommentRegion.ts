@@ -272,7 +272,7 @@ export default class CommentRegion extends SelectableObject {
     } else {
       StateManager.addToSelection([this]);
     }
-    StateManager.startDragCommentsOperation(this.lastPos);
+    StateManager.startDragElementsOperation(this.lastPos);
   }
 
   public onDragMove(ev: Konva.KonvaEventObject<MouseEvent>) {
@@ -301,7 +301,7 @@ export default class CommentRegion extends SelectableObject {
     // prevents calling completeDrag when no cooresponding startDrag was previously called
     if (ev.evt === undefined) return;
     StateManager.allowOtherActions();
-    StateManager.completeDragCommentsOperation(this.nodeGroup.position());
+    StateManager.completeDragElementsOperation(this.nodeGroup.position());
   }
 
   public resize() {
@@ -343,14 +343,6 @@ export default class CommentRegion extends SelectableObject {
 
     // allow textbox width to adjust to new regionRect width
     this.text = this._text;
-  }
-
-  /**
-   * Sets the comment to have a new position.
-   * @param position The new position to set the comment to.
-   */
-  public setPosition(position: Vector2d) {
-    this.nodeGroup.position(position);
   }
 
   /**
