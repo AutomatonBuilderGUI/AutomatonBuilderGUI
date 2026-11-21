@@ -2839,140 +2839,101 @@ export default class StateManager {
     return this._useDarkMode;
   }
 
-  /** The initial position of one of the nodes when nodes are dragged. */
-  private static _dragStatesStartPosition: Vector2d | null = null;
+  /** The initial position of one of the elements when elements are dragged. */
+  private static _dragElementsStartPosition: Vector2d | null = null;
 
   /**
-   * Stores the initial position of one of the nodes at the beginning of a
-   * node-dragging operation. This value is compared to the same node's
+   * Stores the initial position of one of the elements at the beginning of a
+   * dragging operation. This value is compared to the same element's
    * position as the drag operation continues, so that the same offset is
-   * applied to all selected nodes and it appears the user is dragging all
+   * applied to all selected elements and it appears the user is dragging all
    * nodes at once.
    * @param startPos The initial position of one of the nodes.
    */
-  public static startDragStatesOperation(startPos: Vector2d) {
-    this._dragStatesStartPosition = startPos;
+  public static startDragElementsOperation(startPos: Vector2d) {
+    this._dragElementsStartPosition = startPos;
   }
 
   /**
-   * Pushes an action to the action stack that moves the selected nodes
+   * Pushes an action to the action stack that moves the selected elements
    * by a certain amount.
    * @param finalPos The final position of the same node as was used for
    * `StateManager.startDragStatesOperation` at the beginning of this drag
    * operation.
    */
-  public static completeDragStatesOperation(finalPos: Vector2d) {
-    let startPos = this._dragStatesStartPosition;
+  public static completeDragElementsOperation(finalPos: Vector2d) {
+    let startPos = this._dragElementsStartPosition;
     let endPos = finalPos;
     let delta: Vector2d = {
       x: endPos.x - startPos.x,
       y: endPos.y - startPos.y,
     };
 
-    let moveStatesForward = (data: MoveStatesActionData) => {
-      data.states.forEach((state) => {
-        state.setPosition({
-          x: state.nodeGroup.position().x + delta.x,
-          y: state.nodeGroup.position().y + delta.y,
-        });
+    const draggedStuff: Array<SelectableObject> =
+      StateManager.selectedObjects.filter(
+        (e: SelectableObject) => !(e instanceof TransitionWrapper),
+      );
 
-        if (StateManager.startNode === state) {
+    let moveElementsForward = (data: MoveElementsActionData) => {
+      data.elements.forEach((element: SelectableObject) => {
+        element.konvaObject.position({
+          x: element.konvaObject.position().x + delta.x,
+          y: element.konvaObject.position().y + delta.y,
+        });
+        if (StateManager.startNode === element) {
           this.updateStartNodePosition();
         }
       });
       StateManager.updateTransitions();
     };
 
-    let moveStatesBackward = (data: MoveStatesActionData) => {
-      data.states.forEach((state) => {
-        state.setPosition({
-          x: state.nodeGroup.position().x - delta.x,
-          y: state.nodeGroup.position().y - delta.y,
+    let moveElementsBackward = (data: MoveElementsActionData) => {
+      data.elements.forEach((element: SelectableObject) => {
+        element.konvaObject.position({
+          x: element.konvaObject.position().x - delta.x,
+          y: element.konvaObject.position().y - delta.y,
         });
-
-        if (StateManager.startNode === state) {
+        if (StateManager.startNode === element) {
           this.updateStartNodePosition();
         }
       });
       StateManager.updateTransitions();
     };
 
-    let moveStatesString = "Move ";
-    if (this.selectedObjects.length > 1) {
-      moveStatesString += `${this.selectedObjects.length} Nodes`;
-    } else if (this.selectedObjects.length == 1) {
-      let singleState = this.selectedObjects[0] as NodeWrapper;
-      moveStatesString += `"${singleState.labelText}"`;
+    const nodes = draggedStuff.filter(
+      (e: SelectableObject) => e instanceof NodeWrapper,
+    );
+    const nodeCount = nodes.length;
+    const commentCount = draggedStuff.filter(
+      (e: SelectableObject) => e instanceof CommentRegion,
+    ).length;
+
+    let moveElementsString = "Move ";
+    if (nodeCount > 0) {
+      if (nodeCount > 1) {
+        moveElementsString += `${nodeCount} Nodes`;
+      } else if (nodeCount == 1) {
+        moveElementsString += `"${nodes[0].labelText}"`;
+      }
+      if (commentCount > 0) moveElementsString += ` and `;
     }
-
-    let moveNodesAction = new Action(
+    if (commentCount > 0) {
+      if (commentCount > 1) {
+        moveElementsString += `${commentCount} Comments`;
+      } else if (commentCount == 1) {
+        moveElementsString += `1 Comment`;
+      }
+    }
+    let moveElementsAction = new Action(
       "moveStates",
-      moveStatesString,
-      moveStatesForward,
-      moveStatesBackward,
-      { delta: delta, states: [...this.selectedObjects] },
+      moveElementsString,
+      moveElementsForward,
+      moveElementsBackward,
+      { delta: delta, elements: draggedStuff },
       true,
     );
 
-    UndoRedoManager.pushAction(moveNodesAction, false);
-  }
-
-  /** The initial position of one of the comment regions when comments are dragged. */
-  private static _dragCommentsStartPosition: Vector2d | null = null;
-
-  /**
-   * Stores the initial position of one of the comments being dragged. Use for
-   * undo / redo operations for moving comment regions.
-   * @param startPos The initial position of one of the comments.
-   */
-  public static startDragCommentsOperation(startPos: Vector2d) {
-    this._dragCommentsStartPosition = startPos;
-  }
-
-  /**
-   * Pushes an action to the action stack that moves the selected comments
-   * by a certain amount.
-   * @param finalPos The final position of the same comment as was used for
-   * `StateManager.startDragCommentsOperation` at the beginning of this drag
-   * operation.
-   */
-  public static completeDragCommentsOperation(finalPos: Vector2d) {
-    let startPos = this._dragCommentsStartPosition;
-    let endPos = finalPos;
-    let delta: Vector2d = {
-      x: endPos.x - startPos.x,
-      y: endPos.y - startPos.y,
-    };
-
-    let moveCommentsForward = (data: MoveCommentsActionData) => {
-      data.comments.forEach((comment) => {
-        comment.setPosition({
-          x: comment.nodeGroup.position().x + delta.x,
-          y: comment.nodeGroup.position().y + delta.y,
-        });
-      });
-    };
-
-    let moveCommentsBackward = (data: MoveCommentsActionData) => {
-      data.comments.forEach((comment) => {
-        comment.setPosition({
-          x: comment.nodeGroup.position().x - delta.x,
-          y: comment.nodeGroup.position().y - delta.y,
-        });
-      });
-    };
-
-    let maybeS = this.selectedObjects.length == 1 ? "" : "s";
-    let moveCommentsAction = new Action(
-      "moveComments",
-      `Move ${this.selectedObjects.length} Comment${maybeS}`,
-      moveCommentsForward,
-      moveCommentsBackward,
-      { delta: delta, comments: [...this.selectedObjects] },
-      true,
-    );
-
-    UndoRedoManager.pushAction(moveCommentsAction, false);
+    UndoRedoManager.pushAction(moveElementsAction, false);
   }
 
   /** The initial position of the comment region when resized. */
@@ -3159,12 +3120,12 @@ class RemoveNodeActionDataMulti extends ActionData {
 }
 
 /** Holds the data associated with a "move nodes" action. */
-class MoveStatesActionData extends ActionData {
+class MoveElementsActionData extends ActionData {
   /** The amount by which nodes were moved in this action. */
   public delta: Vector2d;
 
   /** The nodes moved in this action. */
-  public states: Array<NodeWrapper>;
+  public elements: Array<SelectableObject>;
 }
 
 /** Holds the data associated with a "set node name" action. */
@@ -3305,15 +3266,6 @@ class CreateCommentActionData extends ActionData {
 
   /** The comment region created in this action. */
   public commentRegion: CommentRegion;
-}
-
-/** Holds the data associated with a "move comments" action. */
-class MoveCommentsActionData extends ActionData {
-  /** The amount by which comments were moved in this action. */
-  public delta: Vector2d;
-
-  /** The comments moved in this action. */
-  public comments: CommentRegion[];
 }
 
 /** Holds the data associated with a "set comments color" action. */
