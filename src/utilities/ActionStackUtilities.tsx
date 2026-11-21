@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import UndoRedoManager, { Action } from "../UndoRedoManager";
+import UndoRedoManager, { Action } from "../Managers/UndoRedoManager";
 
 /**
  * Returns the current stack and the current stack location. In most cases,

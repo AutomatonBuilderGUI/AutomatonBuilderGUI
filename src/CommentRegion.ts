@@ -1,5 +1,5 @@
 import Konva from "konva";
-import StateManager from "./stateManager/StateManager";
+import StateManager from "./Managers/StateManager";
 import { Tool } from "./Tool";
 import { Vector2d } from "konva/lib/types";
 import SelectableObject from "./SelectableObject";

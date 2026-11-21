@@ -1,4 +1,4 @@
-import StateManager from "./stateManager/StateManager";
+import StateManager from "./Managers/StateManager";
 import { Tool } from "./Tool";
 import { useState, useEffect } from "react";
 import { createRoot } from "react-dom/client";

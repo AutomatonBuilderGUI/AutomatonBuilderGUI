@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import TokenWrapper from "../TokenWrapper";
-import StateManager from "../stateManager/StateManager";
+import StateManager from "../Managers/StateManager";
 import {
   CoreListItem,
   CoreListItem_Left,

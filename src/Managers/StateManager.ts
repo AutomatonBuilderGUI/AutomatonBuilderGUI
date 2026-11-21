@@ -10,7 +10,10 @@ import DFA from "automaton-kit/lib/dfa/DFA";
 import DFATransition from "automaton-kit/lib/dfa/DFATransition";
 import DFAState from "automaton-kit/lib/dfa/DFAState";
 import { convertIDtoLabelOrSymbol } from "../utilities/AutomatonUtilities";
-import UndoRedoManager, { Action, ActionData } from "../UndoRedoManager";
+import UndoRedoManager, {
+  Action,
+  ActionData,
+} from "../Managers/UndoRedoManager";
 import { exportAutomatonToImage } from "./FileIO";
 import { Vector2d } from "konva/lib/types";
 import { KonvaEventObject } from "konva/lib/Node";
@@ -46,7 +49,7 @@ import {
   SerializableState,
   SerializableToken,
   SerializableTransition,
-} from "./SearilizableInterfaces";
+} from "./SerializableInterfaces";
 
 /**
  * The "engine" behind the Automaton Builder GUI. It handles a lot of the

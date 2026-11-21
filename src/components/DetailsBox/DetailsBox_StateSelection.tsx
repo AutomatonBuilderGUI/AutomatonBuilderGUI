@@ -1,10 +1,10 @@
 import { useState, useEffect } from "react";
 import NodeWrapper from "../../NodeWrapper";
 import SelectableObject from "../../SelectableObject";
-import StateManager from "../../stateManager/StateManager";
+import StateManager from "../../Managers/StateManager";
 import { useActionStack } from "../../utilities/ActionStackUtilities";
 import { CoreListItem, CoreListItem_Left, ListItem } from "../ListItem";
-import { StackableAction } from "../../stateManager/StackableAction";
+import { StackableAction } from "../../Managers/StackableAction";
 
 interface DetailsBox_StateSelectionProps {
   nodeWrappers: NodeWrapper[];

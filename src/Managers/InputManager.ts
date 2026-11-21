@@ -1,5 +1,5 @@
 import StateManager from "./StateManager";
-import UndoRedoManager from "../UndoRedoManager";
+import UndoRedoManager from "../Managers/UndoRedoManager";
 import {
   copySelectedObjects,
   cutSelectedObjects,

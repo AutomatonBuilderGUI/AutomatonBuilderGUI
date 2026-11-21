@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import CommentRegion from "../../CommentRegion";
 import SelectableObject from "../../SelectableObject";
-import StateManager from "../../stateManager/StateManager";
+import StateManager from "../../Managers/StateManager";
 import { useActionStack } from "../../utilities/ActionStackUtilities";
 import { CoreListItem, CoreListItem_Left, ListItem } from "../ListItem";
 

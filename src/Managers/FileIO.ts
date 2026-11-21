@@ -2,7 +2,7 @@ import Konva from "konva";
 import TransitionWrapper from "../TransitionWrapper";
 import { ChangeEvent } from "react";
 import StateManager from "./StateManager";
-import { SerializableAutomaton } from "./SearilizableInterfaces";
+import { SerializableAutomaton } from "./SerializableInterfaces";
 import TokenWrapper from "../TokenWrapper";
 import NodeWrapper from "../NodeWrapper";
 /** Everything the export needs from StateManager, supplied by the caller. */

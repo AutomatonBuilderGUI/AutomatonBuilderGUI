@@ -1,5 +1,5 @@
 import { ChangeEvent, useRef, useState } from "react";
-import StateManager from "../stateManager/StateManager";
+import StateManager from "../Managers/StateManager";
 import { IconContext } from "react-icons";
 import { BsCheckCircleFill, BsXCircleFill } from "react-icons/bs";
 import { testStringOnAutomata } from "./TestStringOnAutomata";
@@ -11,7 +11,7 @@ import {
 import { BiTestTube } from "react-icons/bi";
 import FloatingPanel from "./FloatingPanel";
 import ErrorDialogBox from "./ErrorDialogBox";
-import { uploadJSON } from "../stateManager/FileIO";
+import { uploadJSON } from "../Managers/FileIO";
 
 export default function TestCasesPanel() {
   const [errorMessage, setErrorMessage] = useState("");

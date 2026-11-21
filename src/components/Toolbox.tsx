@@ -1,14 +1,10 @@
 import { Tool } from "../Tool";
 import ToolButton from "./ToolButton";
-import StateManager from "../stateManager/StateManager";
+import StateManager from "../Managers/StateManager";
 import { useRef } from "react";
 import { useState } from "react";
 import { ChangeEvent } from "react";
-import {
-  uploadJSON,
-  downloadJSON,
-  loadAutomaton,
-} from "../stateManager/FileIO";
+import { uploadJSON, downloadJSON, loadAutomaton } from "../Managers/FileIO";
 import {
   BsCursor,
   BsCursorFill,
@@ -35,7 +31,7 @@ import {
   resetZoom,
   centerStage,
   fitAutomatonOnScreen,
-} from "../stateManager/ZoomManager";
+} from "../Managers/ZoomManager";
 import { TbZoomReset } from "react-icons/tb";
 import { GrGrid } from "react-icons/gr";
 import ConfirmationDialog from "./ConfirmationDialog";

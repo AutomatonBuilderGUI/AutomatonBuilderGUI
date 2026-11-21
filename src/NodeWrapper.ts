@@ -1,12 +1,11 @@
 import Konva from "konva";
-import StateManager from "./stateManager/StateManager";
-import { SerializableToken } from "./stateManager/SearilizableInterfaces";
-import { SerializableState } from "./stateManager/SearilizableInterfaces";
+import StateManager from "./Managers/StateManager";
+import { SerializableState } from "./Managers/SerializableInterfaces";
 import { Tool } from "./Tool";
 import { Vector2d } from "konva/lib/types";
 import SelectableObject from "./SelectableObject";
 import { v4 as uuidv4 } from "uuid";
-import { StackableAction } from "./stateManager/StackableAction";
+import { StackableAction } from "./Managers/StackableAction";
 
 /**
  * The class that holds node information (label, start node status, etc)

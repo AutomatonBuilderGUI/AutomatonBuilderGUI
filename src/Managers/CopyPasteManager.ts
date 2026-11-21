@@ -1,7 +1,7 @@
 import StateManager from "./StateManager";
 import NodeWrapper from "../NodeWrapper";
 import { PasteActionData, CutActionData } from "./StackableAction";
-import UndoRedoManager, { Action } from "../UndoRedoManager";
+import UndoRedoManager, { Action } from "../Managers/UndoRedoManager";
 import TransitionWrapper from "../TransitionWrapper";
 import SelectableObject from "../SelectableObject";
 

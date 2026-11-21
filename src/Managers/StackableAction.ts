@@ -5,7 +5,10 @@
  * @param isAccept Whether or not the given nodes should be an accepting node.
  */
 import NodeWrapper from "../NodeWrapper";
-import UndoRedoManager, { Action, ActionData } from "../UndoRedoManager";
+import UndoRedoManager, {
+  Action,
+  ActionData,
+} from "../Managers/UndoRedoManager";
 import StateManager from "./StateManager";
 import { Vector2d } from "konva/lib/types";
 import CommentRegion from "../CommentRegion";

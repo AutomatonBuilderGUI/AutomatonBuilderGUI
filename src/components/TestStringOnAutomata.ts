@@ -1,5 +1,5 @@
 import DFARunner, { DFARunnerStatus } from "automaton-kit/lib/dfa/DFARunner";
-import StateManager from "../stateManager/StateManager";
+import StateManager from "../Managers/StateManager";
 
 export function testStringOnAutomata(testString: string): string {
   let myDFA = StateManager.dfa;
