@@ -1,19 +1,55 @@
-import NodeWrapper from "./NodeWrapper";
-import CommentRegion from "./CommentRegion";
-import { Tool } from "./Tool";
+import NodeWrapper from "../NodeWrapper";
+import CommentRegion from "../CommentRegion";
+import { Tool } from "../Tool";
 import Konva from "konva";
-import TransitionWrapper from "./TransitionWrapper";
-import SelectableObject from "./SelectableObject";
-import TokenWrapper from "./TokenWrapper";
-import { ChangeEvent } from "react";
-import { LightColorScheme, DarkColorScheme } from "./ColorSchemes";
+import TransitionWrapper from "../TransitionWrapper";
+import SelectableObject from "../SelectableObject";
+import TokenWrapper from "../TokenWrapper";
+import { LightColorScheme, DarkColorScheme } from "../ColorSchemes";
 import DFA from "automaton-kit/lib/dfa/DFA";
 import DFATransition from "automaton-kit/lib/dfa/DFATransition";
 import DFAState from "automaton-kit/lib/dfa/DFAState";
-import { convertIDtoLabelOrSymbol } from "./utilities/AutomatonUtilities";
-import UndoRedoManager, { Action, ActionData } from "./UndoRedoManager";
+import { convertIDtoLabelOrSymbol } from "../utilities/AutomatonUtilities";
+import UndoRedoManager, {
+  Action,
+  ActionData,
+} from "../Managers/UndoRedoManager";
+import { exportAutomatonToImage } from "./FileIO";
 import { Vector2d } from "konva/lib/types";
 import { KonvaEventObject } from "konva/lib/Node";
+import { getDiagramBounds } from "./ZoomManager";
+import { handleWheelEvent } from "./InputManager";
+import {
+  StackableAction,
+  SetNodesIsAcceptActionData,
+  ResizeCommentActionData,
+  SetCommentsTextActionData,
+  MoveCommentsActionData,
+  SetCommentsColorActionData,
+  PasteActionData,
+  CutActionData,
+  CreateCommentActionData,
+  AddTokenActionData,
+  RemoveTokenActionData,
+  SetTokenSymbolActionData,
+  CreateNodeActionData,
+  RemoveNodeActionData,
+  RemoveNodeActionDataMulti,
+  SetNodeNameActionData,
+  SetNodeIsStartActionData,
+  AddTransitionActionData,
+  RemoveTransitionActionData,
+  SetTransitionAcceptsTokenData,
+} from "./StackableAction";
+
+import { onKeyDown } from "./InputManager";
+
+import {
+  SerializableAutomaton,
+  SerializableState,
+  SerializableToken,
+  SerializableTransition,
+} from "./SerializableInterfaces";
 
 /**
  * The "engine" behind the Automaton Builder GUI. It handles a lot of the
@@ -36,7 +72,7 @@ export default class StateManager {
   public static get startNode(): NodeWrapper | null {
     return StateManager._startNode;
   }
-  private static _startNode: NodeWrapper | null = null;
+  static _startNode: NodeWrapper | null = null;
 
   /** Holds all of the node wrappers in the automaton. */
   private static _nodeWrappers: Array<NodeWrapper> = [];
@@ -84,7 +120,7 @@ export default class StateManager {
   private static _tentConnectionLine: Konva.Arrow | null = null;
 
   /** The arrow used to represent the start node. */
-  private static _startStateLine: Konva.Arrow | null = null;
+  static _startStateLine: Konva.Arrow | null = null;
 
   /** The layer of the Konva stage that draws the selection box (and perhaps other temporary constructs)*/
   private static _selectBoxLayer: Konva.Layer | null = null;
@@ -119,6 +155,10 @@ export default class StateManager {
   private static clean: boolean = true;
   private static debugActive: boolean = false;
 
+  public static isDebugEnabled(): boolean {
+    return this.debugActive;
+  }
+
   /** Returns UI configuration information for the current color scheme. */
   public static get colorScheme() {
     if (this._useDarkMode) {
@@ -152,6 +192,78 @@ export default class StateManager {
     }
 
     StateManager.debugActive = !StateManager.debugActive;
+  }
+
+  static addNode(node: NodeWrapper) {
+    this._nodeWrappers.push(node);
+    this._nodeLayer.add(node.nodeGroup);
+  }
+
+  static findNodeById(id: string) {
+    return this._nodeWrappers.find((n) => n.id === id);
+  }
+
+  static addStateTransition(t: TransitionWrapper) {
+    this._transitionWrappers.push(t);
+    this._transitionLayer.add(t.konvaGroup);
+  }
+
+  /**
+   * Immediately removes a node from the automaton. Does not touch
+   * transitions attached to it; callers detach those separately.
+   *
+   * Only meant to be used from inside CopyPasteManager
+   */
+  static detachNode(node: NodeWrapper) {
+    this._nodeWrappers = this._nodeWrappers.filter((n) => n !== node);
+    node.deselect();
+    node.nodeGroup.remove();
+    if (this._startNode === node) {
+      this.startNode = null;
+    }
+  }
+
+  /**
+   * Immediately removes a transition from the automaton.
+   *
+   * **NOTE:** Not undo/redo safe on its own. Meant to be called from inside
+   * an Action's forward/backward functions. For a user-facing delete, use
+   * `StateManager.removeTransition`.
+   */
+  static detachTransition(t: TransitionWrapper) {
+    this._transitionWrappers = this._transitionWrappers.filter((x) => x !== t);
+    t.deselect();
+    t.konvaGroup.remove();
+  }
+
+  static findTokenById(tokId: string): TokenWrapper | undefined {
+    return this._alphabet.find((tok) => tok.id === tokId);
+  }
+
+  static pushAlphabetToken(token: TokenWrapper) {
+    this._alphabet.push(token);
+  }
+
+  static redraw() {
+    this._stage?.draw();
+  }
+
+  static get clipboard(): ReadonlyArray<SelectableObject> {
+    return this._clipboard;
+  }
+  static set clipboard(items: SelectableObject[]) {
+    this._clipboard = [...items];
+  }
+
+  public static get stage(): Konva.Stage {
+    if (!this._stage) throw new Error("Stage is not initialized.");
+    return this._stage;
+  }
+  public static get nodeWrappers(): ReadonlyArray<NodeWrapper> {
+    return this._nodeWrappers;
+  }
+  public static get transitionWrappers(): ReadonlyArray<TransitionWrapper> {
+    return this._transitionWrappers;
   }
 
   static notifyListeners() {
@@ -217,7 +329,7 @@ export default class StateManager {
       StateManager.onDoubleClick.call(this, ev),
     );
     this._stage.on("click", (ev) => StateManager.onClick.call(this, ev));
-    this._stage.on("wheel", StateManager.handleWheelEvent);
+    this._stage.on("wheel", handleWheelEvent);
     this._stage.on("dragmove", StateManager.onDragMove);
     this._stage.on("pointerdown", StateManager.onPointerDown);
     this._stage.on("pointermove", StateManager.onPointerMove);
@@ -287,7 +399,7 @@ export default class StateManager {
       StateManager.endResizeCommentOperation();
     });
 
-    addEventListener("keydown", this.onKeyDown);
+    addEventListener("keydown", onKeyDown);
     addEventListener("resize", this.handleResize);
     StateManager.makeClean();
   }
@@ -318,6 +430,16 @@ export default class StateManager {
 
       StateManager._stage.draw();
     }
+  }
+
+  public static blockOtherActions() {
+    StateManager.lockExtras = true;
+  }
+  public static allowOtherActions() {
+    StateManager.lockExtras = false;
+  }
+  public static get safeToAct(): boolean {
+    return !StateManager.lockExtras;
   }
 
   /**
@@ -397,120 +519,18 @@ export default class StateManager {
     StateManager._gridLayer.batchDraw();
   }
 
-  //diagram bounds to know which exact part of the canvas to export
-  private static getDiagramBounds(
-    leftPadding: number = 150,
-    bottomPadding: number = 150,
-    rightPadding: number = 150,
-    topPadding: number = 150,
-  ) {
-    if (
-      !StateManager._nodeWrappers.length &&
-      !StateManager._transitionWrappers.length
-    ) {
-      return { x: 0, y: 0, width: 0, height: 0 };
-    }
-    let minX = Infinity,
-      minY = Infinity,
-      maxX = -Infinity,
-      maxY = -Infinity;
-
-    StateManager._nodeWrappers.forEach((node) => {
-      const { x, y } = node.nodeGroup.position();
-      const radius = NodeWrapper.NodeRadius;
-      minX = Math.min(minX, x - radius);
-      minY = Math.min(minY, y - radius);
-      maxX = Math.max(maxX, x + radius);
-      maxY = Math.max(maxY, y + radius);
-    });
-
-    minX -= leftPadding;
-    minY -= bottomPadding;
-    maxX += rightPadding;
-    maxY += topPadding;
-    return {
-      x: minX,
-      y: minY,
-      width: maxX - minX,
-      height: maxY - minY,
-    };
-  }
-  //lock tool-changing
-  public static blockOtherActions() {
-    StateManager.lockExtras = true;
-  }
-
-  //unlock tool-changing
-  public static allowOtherActions() {
-    StateManager.lockExtras = false;
-  }
-
-  //If true, the tool can't be switched.
-  public static get safeToAct(): boolean {
-    return !StateManager.lockExtras;
-  }
-
+  /** Exports the diagram as a PNG. Thin wrapper that hands private state to ExportFile. */
+  /** Now lives in the ExportFile.ts under Components **/
   public static exportAutomatonToImage() {
-    if (!StateManager._stage) {
-      console.error("error: _stage is not initialized");
-      return;
-    }
-    const originalScale = StateManager._stage.scale();
-    const originalPosition = StateManager._stage.position();
-
-    StateManager._stage.scale({ x: 1, y: 1 });
-    StateManager._stage.position({ x: 0, y: 0 });
-    StateManager._stage.batchDraw();
-
-    StateManager.transitions.forEach((transition) => {
-      transition.updatePoints();
-      if (!transition.konvaGroup.getParent()) {
-        StateManager._transitionLayer.add(transition.konvaGroup);
-      }
+    exportAutomatonToImage({
+      stage: StateManager._stage,
+      gridLayer: StateManager._gridLayer,
+      nodeLayer: StateManager._nodeLayer,
+      transitionLayer: StateManager._transitionLayer,
+      transitions: StateManager.transitions,
+      bounds: getDiagramBounds(),
+      useDarkMode: StateManager.useDarkMode,
     });
-
-    StateManager._gridLayer.batchDraw();
-    StateManager._nodeLayer.batchDraw();
-    StateManager._transitionLayer.batchDraw();
-
-    const bounds = StateManager.getDiagramBounds();
-
-    // Set background based on dark/light mode.
-    const background: Konva.Rect = new Konva.Rect({
-      x: bounds.x,
-      y: bounds.y,
-      width: bounds.width,
-      height: bounds.height,
-      fill: StateManager.useDarkMode ? "black" : "white",
-      listening: false,
-    });
-
-    StateManager._gridLayer.add(background);
-    StateManager._gridLayer.moveToBottom();
-    StateManager._gridLayer.batchDraw();
-
-    const dataURL = StateManager._stage.toDataURL({
-      mimeType: "image/png",
-      pixelRatio: 2,
-      x: bounds.x,
-      y: bounds.y,
-      width: bounds.width,
-      height: bounds.height,
-    });
-
-    background.destroy();
-    StateManager._gridLayer.batchDraw();
-
-    StateManager._stage.scale(originalScale);
-    StateManager._stage.position(originalPosition);
-    StateManager._stage.batchDraw();
-
-    const downloadLink = document.createElement("a");
-    downloadLink.href = dataURL;
-    downloadLink.download = "diagram.png";
-    document.body.appendChild(downloadLink);
-    downloadLink.click();
-    document.body.removeChild(downloadLink);
   }
 
   /** Gets the current tool. */
@@ -837,54 +857,21 @@ export default class StateManager {
     let isStart = StateManager.startNode === node;
 
     let removeNodeForward = (data: RemoveNodeActionData) => {
-      // Remove all transitions involving this node from the current state machine
-      StateManager._transitionWrappers =
-        StateManager._transitionWrappers.filter((transition) => {
-          return !transitionsInvolvingThisNode.has(transition);
-        });
-
-      data.transitions.forEach((transition) => {
-        transition.deselect();
-        transition.konvaGroup.remove();
-      });
-
+      // Remove all transitions involving this node, then the node itself
+      // (detachNode also clears the start state if needed)
+      data.transitions.forEach((t) => StateManager.detachTransition(t));
+      StateManager.detachNode(data.node);
       StateManager.updateTransitions();
-
-      // Disable the node's selected appearance
-      data.node.deselect();
-
-      // Remove the node itself
-      StateManager._nodeWrappers = StateManager._nodeWrappers.filter(
-        (toDelete) => {
-          return node !== toDelete;
-        },
-      );
-      data.node.nodeGroup.remove();
-
-      // Clear start state, if this node was the start state
-      if (data.isStart) {
-        StateManager.startNode = null;
-      }
     };
 
     let removeNodeBackward = (data: RemoveNodeActionData) => {
-      // Add the node itself
+      StateManager.addNode(data.node);
 
-      StateManager._nodeWrappers.push(data.node);
-
-      // Create Konva objects
-      StateManager._nodeLayer.add(data.node.nodeGroup);
-
-      // Set state start
       if (data.isStart) {
         StateManager.startNode = data.node;
       }
 
-      // Add all transitions involving this node to the current state machine
-      data.transitions.forEach((transition) => {
-        StateManager._transitionWrappers.push(transition);
-        StateManager._transitionLayer.add(transition.konvaGroup);
-      });
+      data.transitions.forEach((t) => StateManager.addStateTransition(t));
       StateManager.updateTransitions();
       StateManager.selectObject(data.node);
     };
@@ -928,45 +915,6 @@ export default class StateManager {
   }
 
   /**
-   * Pushes an action to the action stack that sets the accept status of the
-   * given nodes.
-   * @param nodes The nodes to set the accept status of.
-   * @param isAccept Whether or not the given nodes should be an accepting node.
-   */
-  public static setNodesIsAccept(nodes: NodeWrapper[], isAccept: boolean) {
-    let oldValues = nodes.map((node) => node.isAcceptNode);
-
-    let setNodesIsAcceptForward = (data: SetNodesIsAcceptActionData) => {
-      data.nodes.forEach((node) => {
-        node.isAcceptNode = data.newValue;
-      });
-    };
-
-    let setNodesIsAcceptBackward = (data: SetNodesIsAcceptActionData) => {
-      data.nodes.forEach((node, i) => {
-        node.isAcceptNode = data.oldValues[i];
-      });
-    };
-
-    let actionStackLabel;
-
-    if (nodes.length == 1) {
-      actionStackLabel = `Mark "${nodes[0].labelText}" As ${isAccept ? "Accepting" : "Rejecting"}`;
-    } else {
-      actionStackLabel = `Mark ${nodes.length} Selected States As ${isAccept ? "Accepting" : "Rejecting"}`;
-    }
-
-    let setNodesIsAcceptAction = new Action(
-      "setNodesIsAccept",
-      actionStackLabel,
-      setNodesIsAcceptForward,
-      setNodesIsAcceptBackward,
-      { oldValues: oldValues, newValue: isAccept, nodes: nodes },
-    );
-    UndoRedoManager.pushAction(setNodesIsAcceptAction);
-  }
-
-  /**
    * Pushes an action to the action stack that sets the given node to be the
    * automaton's start node.
    * @param node The node to set as the start node.
@@ -1007,23 +955,13 @@ export default class StateManager {
 
     if (node) {
       node.nodeGroup.on("move.startstate", (ev) =>
-        StateManager.updateStartNodePosition(),
+        StackableAction.updateStartNodePosition(),
       );
-      StateManager.updateStartNodePosition();
+      StackableAction.updateStartNodePosition();
       StateManager._startStateLine.visible(true);
     } else {
       StateManager._startStateLine.visible(false);
     }
-  }
-
-  /**
-   * Updates the position of the start node arrow to align with the
-   * automaton's start node.
-   */
-  public static updateStartNodePosition() {
-    StateManager._startStateLine.absolutePosition(
-      StateManager._startNode.nodeGroup.absolutePosition(),
-    );
   }
 
   public static setCommentRegionColor(
@@ -1086,351 +1024,6 @@ export default class StateManager {
     );
 
     UndoRedoManager.pushAction(setCommentsTextAction);
-  }
-
-  /**
-   * Handles keyboard input, for actions like undo/redo and deleting objects.
-   */
-  private static onKeyDown(ev: KeyboardEvent) {
-    //based on the ignore shortcuts implementation in index.tsx
-
-    const n = document.activeElement.nodeName;
-    if (n === "INPUT" || n === "TEXTAREA") {
-      return;
-    }
-
-    if (
-      (ev.code === "Backspace" || ev.code === "Delete") &&
-      StateManager.safeToAct
-    ) {
-      StateManager.deleteAllSelectedObjects();
-      return;
-    }
-
-    // https://stackoverflow.com/a/77837006
-    if (
-      (ev.metaKey || ev.ctrlKey) &&
-      ev.key == "z" &&
-      !ev.shiftKey &&
-      StateManager.safeToAct
-    ) {
-      ev.preventDefault();
-      UndoRedoManager.undo();
-      return;
-    }
-
-    /**
-     * When you hit Ctrl+Shift+Z in windows, the key value is Z instead of z. This seems like a useful way
-     * to determine whether shift was held, but it fails because the key value is z in mac. So, we also need to check the combination of key=z and shiftKey.
-     *
-     * The internet is made from duct tape and nightmeres.
-     */
-
-    // ** handle Ctrl+Y and Ctrl+Shift+Z (redo)**
-    if (
-      (ev.metaKey || ev.ctrlKey) &&
-      (ev.key == "Z" || (ev.key == "z" && ev.shiftKey) || ev.key == "y") &&
-      !this.debugActive
-    ) {
-      ev.preventDefault();
-      UndoRedoManager.redo();
-      return;
-    }
-
-    // **Handle Ctrl+C (Copy)**
-    if (
-      (ev.metaKey || ev.ctrlKey) &&
-      ev.key === "c" &&
-      StateManager.safeToAct
-    ) {
-      ev.preventDefault();
-      StateManager.copySelectedObjects();
-      return;
-    }
-
-    // **Handle Ctrl+X (Cut)**
-    if (
-      (ev.metaKey || ev.ctrlKey) &&
-      ev.key === "x" &&
-      StateManager.safeToAct
-    ) {
-      ev.preventDefault();
-      StateManager.cutSelectedObjects();
-      return;
-    }
-    // **Handle Ctrl+V (Paste)**
-    if (
-      (ev.metaKey || ev.ctrlKey) &&
-      ev.key === "v" &&
-      StateManager.safeToAct
-    ) {
-      ev.preventDefault();
-      StateManager.pasteClipboardObjects();
-      return;
-    }
-  }
-
-  /** Copies the selected objects, including any transitions between selected nodes. */
-  public static copySelectedObjects() {
-    // Copy selected nodes
-    const selectedNodes = this._selectedObjects.filter(
-      (obj) => obj instanceof NodeWrapper,
-    ) as NodeWrapper[];
-
-    // Find transitions between selected nodes
-    const transitionsBetweenSelectedNodes = this._transitionWrappers.filter(
-      (transition) =>
-        selectedNodes.includes(transition.sourceNode) &&
-        selectedNodes.includes(transition.destNode),
-    );
-
-    // Combine selected nodes and transitions between them
-    this._clipboard = [...selectedNodes, ...transitionsBetweenSelectedNodes];
-  }
-
-  /** Pastes the copied objects, including transitions between pasted nodes. */
-  public static pasteClipboardObjects(
-    offsetX: number = 20,
-    offsetY: number = 20,
-  ) {
-    if (!this._clipboard.length) {
-      console.warn("Clipboard is empty, nothing to paste.");
-      return;
-    }
-
-    let pasteData = new PasteActionData(StateManager.selectedObjects);
-
-    // Count the number of nodes to be pasted for action description
-    let nodeCount = this._clipboard.filter(
-      (obj) => obj instanceof NodeWrapper,
-    ).length;
-
-    let isOnlyComments: boolean = nodeCount == 0;
-
-    let performPasteForward = (data: PasteActionData) => {
-      if (data.nodes.length === 0) {
-        // First time performing paste, create nodes
-        const nodeMap = new Map<string, NodeWrapper>();
-
-        // Create new nodes and map them to the original nodes
-        this._clipboard.forEach((obj) => {
-          if (obj instanceof NodeWrapper) {
-            const newNode = new NodeWrapper(`q${StateManager._nextStateId++}`);
-            const position = obj.nodeGroup.position();
-            newNode.createKonvaObjects(
-              position.x + offsetX,
-              position.y + offsetY,
-            );
-            newNode.labelText = obj.labelText; // Copy label
-            newNode.isAcceptNode = obj.isAcceptNode; // Copy accept state status
-            StateManager._nodeWrappers.push(newNode);
-            StateManager._nodeLayer.add(newNode.nodeGroup);
-
-            data.nodes.push(newNode);
-            nodeMap.set(obj.id, newNode);
-          }
-        });
-
-        // Create new transitions using the new nodes
-        this._clipboard.forEach((obj) => {
-          if (obj instanceof TransitionWrapper) {
-            const sourceNode = nodeMap.get(obj.sourceNode.id);
-            const destNode = nodeMap.get(obj.destNode.id);
-
-            // Only create transitions if both source and dest nodes were copied
-            if (sourceNode && destNode) {
-              const newTransition = new TransitionWrapper(
-                sourceNode,
-                destNode,
-                obj.isEpsilonTransition,
-                new Set(obj.tokens), // Copy tokens
-              );
-
-              StateManager._transitionWrappers.push(newTransition);
-              StateManager._transitionLayer.add(newTransition.konvaGroup);
-
-              data.transitions.push(newTransition);
-            }
-          }
-        });
-      } else {
-        // Redoing the paste action, reuse nodes and transitions
-        data.nodes.forEach((node) => {
-          StateManager._nodeWrappers.push(node);
-          StateManager._nodeLayer.add(node.nodeGroup);
-        });
-
-        data.transitions.forEach((transition) => {
-          StateManager._transitionWrappers.push(transition);
-          StateManager._transitionLayer.add(transition.konvaGroup);
-        });
-      }
-
-      StateManager._nodeLayer?.draw();
-      StateManager._transitionLayer?.draw();
-      StateManager.updateTransitions();
-
-      // Select the newly pasted nodes.
-      StateManager.deselectAllObjects();
-      data.nodes.forEach((node) => StateManager.selectObject(node));
-    };
-
-    let performPasteBackward = (data: PasteActionData) => {
-      // Deselect all objects
-      StateManager.deselectAllObjects();
-
-      // Remove transitions
-      data.transitions.forEach((transition) => {
-        StateManager._transitionWrappers =
-          StateManager._transitionWrappers.filter((t) => t !== transition);
-        transition.konvaGroup.remove();
-      });
-
-      // Remove nodes
-      data.nodes.forEach((node) => {
-        StateManager._nodeWrappers = StateManager._nodeWrappers.filter(
-          (n) => n !== node,
-        );
-        node.nodeGroup.remove();
-
-        // If any of the nodes were the start node, reset the start node
-        if (StateManager.startNode === node) {
-          StateManager.startNode = null;
-        }
-      });
-
-      data.originalSelected.forEach(StateManager.selectObject);
-
-      StateManager._nodeLayer?.draw();
-      StateManager._transitionLayer?.draw();
-      StateManager.updateTransitions();
-    };
-
-    let actionDescription = `Paste ${nodeCount} Object${nodeCount !== 1 ? "s" : ""}`;
-    let pasteAction = new Action(
-      "pasteClipboardObjects",
-      actionDescription,
-      performPasteForward,
-      performPasteBackward,
-      pasteData,
-      isOnlyComments,
-    );
-
-    UndoRedoManager.pushAction(pasteAction);
-  }
-
-  /** Cuts the selected objects, including any transitions between selected nodes. */
-  public static cutSelectedObjects() {
-    if (this._selectedObjects.length === 0) {
-      console.warn("No objects selected, nothing to cut.");
-      return;
-    }
-
-    // Copy selected nodes
-    const selectedNodes = this._selectedObjects.filter(
-      (obj) => obj instanceof NodeWrapper,
-    ) as NodeWrapper[];
-
-    // Find transitions between selected nodes
-    const transitionsBetweenSelectedNodes = this._transitionWrappers.filter(
-      (transition) =>
-        selectedNodes.includes(transition.sourceNode) &&
-        selectedNodes.includes(transition.destNode),
-    );
-
-    // Copy selected transitions
-    const selectedTransitions = this._selectedObjects.filter(
-      (obj) => obj instanceof TransitionWrapper,
-    ) as TransitionWrapper[];
-
-    // Combine selected nodes and transitions
-    this._clipboard = [
-      ...selectedNodes,
-      ...selectedTransitions,
-      ...transitionsBetweenSelectedNodes,
-    ];
-
-    const isOnlyComments: boolean =
-      selectedNodes.length == 0 && selectedTransitions.length == 0;
-
-    // Create an action to remove the selected objects
-    let cutData = new CutActionData(this.selectedObjects);
-
-    cutData.nodes = selectedNodes;
-    cutData.transitions = [
-      ...selectedTransitions,
-      ...transitionsBetweenSelectedNodes,
-    ];
-
-    // Save start node if it's being cut
-    cutData.wasStartNode = cutData.nodes.includes(StateManager.startNode);
-
-    let totalObjects = cutData.nodes.length + cutData.transitions.length;
-    let actionDescription = `Cut ${totalObjects} Object${totalObjects !== 1 ? "s" : ""}`;
-
-    let performCutForward = (data: CutActionData) => {
-      // Remove transitions
-      data.transitions.forEach((transition) => {
-        StateManager._transitionWrappers =
-          StateManager._transitionWrappers.filter((t) => t !== transition);
-        transition.konvaGroup.remove();
-      });
-
-      // Remove nodes
-      data.nodes.forEach((node) => {
-        StateManager._nodeWrappers = StateManager._nodeWrappers.filter(
-          (n) => n !== node,
-        );
-        node.nodeGroup.remove();
-
-        // Reset start node if necessary
-        if (StateManager.startNode === node) {
-          StateManager.startNode = null;
-        }
-      });
-
-      StateManager._nodeLayer?.draw();
-      StateManager._transitionLayer?.draw();
-      StateManager.updateTransitions();
-
-      // Deselect all objects
-      StateManager.deselectAllObjects();
-    };
-
-    let performCutBackward = (data: CutActionData) => {
-      // Add nodes back
-      data.nodes.forEach((node) => {
-        StateManager._nodeWrappers.push(node);
-        StateManager._nodeLayer.add(node.nodeGroup);
-
-        // Restore start node if necessary
-        if (data.wasStartNode && StateManager.startNode == null) {
-          StateManager.startNode = node;
-        }
-      });
-
-      // Add transitions back
-      data.transitions.forEach((transition) => {
-        StateManager._transitionWrappers.push(transition);
-        StateManager._transitionLayer.add(transition.konvaGroup);
-      });
-      StateManager._nodeLayer?.draw();
-      StateManager._transitionLayer?.draw();
-      StateManager.deselectAllObjects();
-      data.originalSelected.forEach(StateManager.selectObject);
-      StateManager.updateTransitions();
-    };
-
-    let cutAction = new Action(
-      "cutSelectedObjects",
-      actionDescription,
-      performCutForward,
-      performCutBackward,
-      cutData,
-      isOnlyComments,
-    );
-
-    UndoRedoManager.pushAction(cutAction);
   }
 
   /**
@@ -1608,21 +1201,12 @@ export default class StateManager {
    */
   public static removeTransition(transition: TransitionWrapper) {
     let removeTransitionForward = (data: RemoveTransitionActionData) => {
-      StateManager._transitionWrappers =
-        StateManager._transitionWrappers.filter(
-          (otherTransition) => otherTransition !== data.transition,
-        );
-
-      data.transition.deselect();
-      data.transition.konvaGroup.remove();
+      StateManager.detachTransition(data.transition);
       StateManager.updateTransitions();
     };
 
     let removeTransitionBackward = (data: RemoveTransitionActionData) => {
-      StateManager._transitionWrappers.push(data.transition);
-
-      StateManager._transitionLayer.add(data.transition.konvaGroup);
-      StateManager.selectObject(data.transition);
+      StateManager.addStateTransition(data.transition);
       StateManager.updateTransitions();
     };
 
@@ -2245,125 +1829,6 @@ export default class StateManager {
   }
 
   /**
-   * Called when the user uses the mouse scroll wheel.
-   * This causes the state diagram view to be zoomed in or out.
-   * @param ev
-   */
-  private static handleWheelEvent(ev: any) {
-    ev.evt.preventDefault();
-    var oldScale = StateManager._stage.scaleX();
-
-    var pointer = StateManager._stage.getPointerPosition();
-
-    var mousePointer = {
-      x: (pointer.x - StateManager._stage.x()) / oldScale,
-      y: (pointer.y - StateManager._stage.y()) / oldScale,
-    };
-
-    var newScale = ev.evt.deltaY > 0 ? oldScale * 0.9 : oldScale * 1.1;
-    StateManager._stage.scale({ x: newScale, y: newScale });
-
-    var newPos = {
-      x: pointer.x - mousePointer.x * newScale,
-      y: pointer.y - mousePointer.y * newScale,
-    };
-    StateManager._stage.position(newPos);
-    StateManager._stage.batchDraw();
-    StateManager.drawGrid();
-  }
-
-  /**
-   * Resets the state diagram zoom level to 100%.
-   * @returns
-   */
-  public static resetZoom() {
-    if (!StateManager._stage) {
-      console.error("Stage is not initialized.");
-      return;
-    }
-    StateManager._stage.scale({ x: 1, y: 1 });
-    StateManager._stage.position({ x: 0, y: 0 });
-    StateManager._stage.batchDraw();
-    StateManager.drawGrid();
-  }
-
-  /**
-   * Centers the view of the state diagram to the origin.
-   * @returns
-   */
-  public static centerStage() {
-    if (!StateManager._stage) {
-      console.error("Stage is not initialized.");
-      return;
-    }
-    // Calculate the center based on the container dimensions
-    const x =
-      window.innerWidth / 2 -
-      (StateManager._stage.width() / 2) * StateManager._stage.scaleX();
-    const y =
-      window.innerHeight / 2 -
-      (StateManager._stage.height() / 2) * StateManager._stage.scaleY();
-    StateManager._stage.position({ x, y });
-    StateManager.drawGrid();
-    StateManager._stage.batchDraw();
-  }
-
-  /**
-   * Zooms the view in by 10%.
-   * @returns
-   */
-  public static zoomIn() {
-    if (!StateManager._stage) {
-      console.error("Stage is not initialized.");
-      return;
-    }
-    const scaleBy = 1.1; // Increase scale by 10%
-    StateManager.applyZoom(scaleBy);
-  }
-
-  /**
-   * Zooms the view out by 10%.
-   * @returns
-   */
-  public static zoomOut() {
-    if (!StateManager._stage) {
-      console.error("Stage is not initialized.");
-      return;
-    }
-    const scaleBy = 0.9; // Decrease scale by 10%
-    StateManager.applyZoom(scaleBy);
-  }
-
-  /**
-   * Finds the bounding box of the automaton
-   * and scrolls/zooms the screen to it
-   */
-  public static fitAutomatonOnScreen() {
-    const bounds = StateManager.getDiagramBounds(
-      StateManager._stage.width() / 3,
-      50,
-      50,
-      50,
-    );
-    // Based on window size, the smaller scalar is what we need to be scale the zoom by, and then add some padding
-
-    let scale = Math.min(
-      StateManager._stage.width() / bounds.width,
-      StateManager._stage.height() / bounds.height,
-    );
-    const boxCenterX = bounds.x + bounds.width / 2;
-    const boxCenterY = bounds.y + bounds.height / 2;
-    // finally, apply the zoom and center it in the center of the bounding box
-    StateManager._stage.scale({ x: scale, y: scale });
-    StateManager._stage.position({
-      x: StateManager._stage.width() / 2 - boxCenterX * scale,
-      y: StateManager._stage.height() / 2 - boxCenterY * scale,
-    });
-    StateManager._stage.batchDraw();
-    StateManager.drawGrid();
-  }
-
-  /**
    * Clear out the automaton and alphabet
    * then reset state ID to 0
    * then reset action stack
@@ -2478,26 +1943,6 @@ export default class StateManager {
     }
   }
 
-  /**
-   * Zooms the view in or out by a given ratio.
-   * @param scaleBy The ratio to scale the view by.
-   */
-  private static applyZoom(scaleBy: number) {
-    const oldScale = StateManager._stage.scaleX();
-    const newScale = oldScale * scaleBy;
-    StateManager._stage.scale({ x: newScale, y: newScale });
-
-    const stageCenterX = StateManager._stage.width() / 2;
-    const stageCenterY = StateManager._stage.height() / 2;
-    const newPos = {
-      x: stageCenterX - (stageCenterX - StateManager._stage.x()) * scaleBy,
-      y: stageCenterY - (stageCenterY - StateManager._stage.y()) * scaleBy,
-    };
-    StateManager._stage.position(newPos);
-    StateManager._stage.batchDraw();
-    StateManager.drawGrid();
-  }
-
   /** Returns whether or not all node labels in the automaton are unique. */
   public static areAllLabelsUnique(): boolean {
     const labels = StateManager._nodeWrappers.map((node) => node.labelText);
@@ -2585,120 +2030,6 @@ export default class StateManager {
         .filter((node) => node.isAcceptNode)
         .map((node) => node.id),
     };
-  }
-
-  /**
-   * Converts the current automaton to a JSON file, and downloads it to the
-   * user's device.
-   */
-  public static downloadJSON() {
-    StateManager.makeClean();
-
-    const jsonString = JSON.stringify(StateManager.toSerializable(), null, 4);
-
-    // A hacky solution in my opinion, but apparently it works so hey.
-    // Adapted from https://stackoverflow.com/a/18197341
-
-    let el = document.createElement("a");
-    el.setAttribute(
-      "href",
-      "data:text/plain;charset=utf-8," + encodeURIComponent(jsonString),
-    );
-    el.setAttribute("download", "finite_automaton.json");
-    el.style.display = "none";
-    document.body.appendChild(el);
-    el.click();
-    document.body.removeChild(el);
-  }
-
-  /**
-   * Attempts to load a JSON file from a given file.
-   * (Primarily used for loading automata and test suites.)
-   * @param ev
-   */
-  public static uploadJSON(ev: ChangeEvent<HTMLInputElement>) {
-    const file = ev.target.files.item(0);
-    ev.target.value = null;
-
-    const fileText = file.text().then(
-      (text: string): any => {
-        return JSON.parse(text);
-      },
-      (reject_reason: any): any => {
-        console.error("could not get file text, reason was", reject_reason);
-        return null;
-      },
-    );
-
-    return fileText;
-  }
-
-  /**
-   * Loads the data from a deserialized JSON automaton representation
-   * into the program.
-   * @param json The deserialized JSON object to load.
-   */
-  public static loadAutomaton(json: SerializableAutomaton) {
-    const { states, alphabet, transitions, startState, acceptStates } = json;
-
-    StateManager.clearMachine();
-    StateManager.makeClean();
-
-    // Load each state
-    states.forEach((state) => {
-      const newState = new NodeWrapper(state.label, state.id);
-      newState.createKonvaObjects(state.x, state.y);
-      StateManager._nodeWrappers.push(newState);
-      StateManager._nodeLayer.add(newState.nodeGroup);
-    });
-
-    acceptStates.forEach((state) => {
-      const node = StateManager._nodeWrappers.find((n) => n.id === state);
-      if (node) {
-        node.isAcceptNode = true;
-      }
-    });
-
-    // Load the alphabet
-    alphabet.forEach((tok) => {
-      const newTok = new TokenWrapper(tok.symbol, tok.id);
-      StateManager._alphabet.push(newTok);
-    });
-
-    // Load transitions
-    transitions.forEach((trans) => {
-      const src = StateManager._nodeWrappers.find((n) => n.id === trans.source);
-      const dest = StateManager._nodeWrappers.find((n) => n.id === trans.dest);
-      const isEpsilonTransition = trans.isEpsilonTransition;
-      const tokens = trans.tokens.map((tokID) =>
-        StateManager._alphabet.find((tok) => tok.id === tokID),
-      );
-      const newTrans = new TransitionWrapper(
-        src,
-        dest,
-        isEpsilonTransition,
-        tokens,
-      );
-
-      StateManager._transitionWrappers.push(newTrans);
-      StateManager._transitionLayer.add(newTrans.konvaGroup);
-    });
-
-    // Load the start state
-    const startNodeObj = StateManager._nodeWrappers.filter(
-      (n) => n.id === startState,
-    );
-    if (startNodeObj.length <= 0) {
-      console.error("Start state not found!!");
-    } else {
-      StateManager.startNode = startNodeObj[0];
-    }
-
-    // Accept states are loaded at the same time as states themselves
-
-    // Refresh canvas?
-
-    this._stage.draw();
   }
 
   public static isValidAutomaton(
@@ -2839,9 +2170,6 @@ export default class StateManager {
     return this._useDarkMode;
   }
 
-  /** The initial position of one of the nodes when nodes are dragged. */
-  private static _dragStatesStartPosition: Vector2d | null = null;
-
   /**
    * Stores the initial position of one of the nodes at the beginning of a
    * node-dragging operation. This value is compared to the same node's
@@ -2851,70 +2179,7 @@ export default class StateManager {
    * @param startPos The initial position of one of the nodes.
    */
   public static startDragStatesOperation(startPos: Vector2d) {
-    this._dragStatesStartPosition = startPos;
-  }
-
-  /**
-   * Pushes an action to the action stack that moves the selected nodes
-   * by a certain amount.
-   * @param finalPos The final position of the same node as was used for
-   * `StateManager.startDragStatesOperation` at the beginning of this drag
-   * operation.
-   */
-  public static completeDragStatesOperation(finalPos: Vector2d) {
-    let startPos = this._dragStatesStartPosition;
-    let endPos = finalPos;
-    let delta: Vector2d = {
-      x: endPos.x - startPos.x,
-      y: endPos.y - startPos.y,
-    };
-
-    let moveStatesForward = (data: MoveStatesActionData) => {
-      data.states.forEach((state) => {
-        state.setPosition({
-          x: state.nodeGroup.position().x + delta.x,
-          y: state.nodeGroup.position().y + delta.y,
-        });
-
-        if (StateManager.startNode === state) {
-          this.updateStartNodePosition();
-        }
-      });
-      StateManager.updateTransitions();
-    };
-
-    let moveStatesBackward = (data: MoveStatesActionData) => {
-      data.states.forEach((state) => {
-        state.setPosition({
-          x: state.nodeGroup.position().x - delta.x,
-          y: state.nodeGroup.position().y - delta.y,
-        });
-
-        if (StateManager.startNode === state) {
-          this.updateStartNodePosition();
-        }
-      });
-      StateManager.updateTransitions();
-    };
-
-    let moveStatesString = "Move ";
-    if (this.selectedObjects.length > 1) {
-      moveStatesString += `${this.selectedObjects.length} Nodes`;
-    } else if (this.selectedObjects.length == 1) {
-      let singleState = this.selectedObjects[0] as NodeWrapper;
-      moveStatesString += `"${singleState.labelText}"`;
-    }
-
-    let moveNodesAction = new Action(
-      "moveStates",
-      moveStatesString,
-      moveStatesForward,
-      moveStatesBackward,
-      { delta: delta, states: [...this.selectedObjects] },
-      true,
-    );
-
-    UndoRedoManager.pushAction(moveNodesAction, false);
+    StackableAction._dragStatesStartPosition = startPos;
   }
 
   /** The initial position of one of the comment regions when comments are dragged. */
@@ -3054,300 +2319,6 @@ export default class StateManager {
     UndoRedoManager.redo();
     return;
   }
-
-  //StateManager._nodeWrappers is a private property I provided a public getter to access the nodes
-  public static get nodeWrappers(): Array<NodeWrapper> {
-    return [...StateManager._nodeWrappers];
-  }
-}
-
-/**
- * A representation of an automaton that can be converted to and from a JSON
- * string.
- */
-interface SerializableAutomaton {
-  states: Array<SerializableState>;
-  alphabet: Array<SerializableToken>;
-  transitions: Array<SerializableTransition>;
-  startState: string;
-  acceptStates: Array<string>;
-}
-
-/**
- * A representation of a node that can be converted to and from a JSON string.
- */
-export interface SerializableState {
-  id: string;
-  x: number;
-  y: number;
-  label: string;
-}
-
-/**
- * A representation of a token that can be converted to and from a JSON string.
- */
-export interface SerializableToken {
-  id: string;
-  symbol: string;
-}
-
-/**
- * A representation of a transition that can be converted to and from a JSON
- * string.
- */
-export interface SerializableTransition {
-  id: string;
-  source: string;
-  dest: string;
-  isEpsilonTransition: boolean;
-  tokens: Array<string>;
-}
-
-/** Holds the data associated with a "create node" action. */
-class CreateNodeActionData extends ActionData {
-  /** The X coordinate where the node is created. */
-  public x: number;
-
-  /** The Y coordinate where the node is created. */
-  public y: number;
-
-  /** The node created in this action. */
-  public node: NodeWrapper;
-}
-
-/** Holds the data associated with a "remove node" action. */
-class RemoveNodeActionData extends ActionData {
-  /** The node removed in this action. */
-  public node: NodeWrapper;
-
-  /**
-   * Transitions associated with the node removed in this action, which
-   * also must be removed as part of the action.
-   */
-  public transitions: Set<TransitionWrapper>;
-
-  /**
-   * Whether or not the node removed in this action was the automaton's
-   * start node.
-   */
-  public isStart: boolean;
-}
-
-/** Holds the data associated with a delete all selected objects action. */
-class RemoveNodeActionDataMulti extends ActionData {
-  /** The nodes removed in this action. */
-  public nodes: NodeWrapper[] = [];
-
-  /** The transitions removed in this action. */
-  public transitions: TransitionWrapper[] = [];
-
-  /** The comment regions removed in this action. */
-  public comments: CommentRegion[] = [];
-
-  /**
-   * The objects that were selected before removal. We need this stored because we otherwise can't tell if a transition was selected.
-   */
-  public originalSelected: SelectableObject[];
-
-  /** Whether any of the nodes removed were the start node. */
-  public wasStartNode: boolean = false;
-
-  constructor(originalSelected: SelectableObject[]) {
-    super();
-    this.originalSelected = originalSelected;
-  }
-}
-
-/** Holds the data associated with a "move nodes" action. */
-class MoveStatesActionData extends ActionData {
-  /** The amount by which nodes were moved in this action. */
-  public delta: Vector2d;
-
-  /** The nodes moved in this action. */
-  public states: Array<NodeWrapper>;
-}
-
-/** Holds the data associated with a "set node name" action. */
-class SetNodeNameActionData extends ActionData {
-  /** The name of the node before this action. */
-  public oldName: string;
-
-  /** The name of the node after this action. */
-  public newName: string;
-
-  /** The node renamed in this action. */
-  public node: NodeWrapper;
-}
-
-/** Holds the data associated with a "set nodes is accept node" action. */
-class SetNodesIsAcceptActionData extends ActionData {
-  /** Whether or not the old nodes were an accept node before this action. */
-  public oldValues: boolean[];
-
-  /** Whether or not the nodes were an accept node after this action. */
-  public newValue: boolean;
-
-  /** The nodes to set the accept status of in this action. */
-  public nodes: NodeWrapper[];
-}
-
-/** Holds the data associated with a "set node as start node" action. */
-class SetNodeIsStartActionData extends ActionData {
-  /** The node that was the start node before this action. */
-  public oldStart: NodeWrapper;
-
-  /** The node that was the start node after this action. */
-  public newStart: NodeWrapper;
-}
-
-/** Holds the data associated with an "add transition" action. */
-class AddTransitionActionData extends ActionData {
-  /** The transition created in this action. */
-  public transition: TransitionWrapper;
-
-  /** Objects that were selected before the transition was added */
-  public originalSelected: SelectableObject[];
-
-  constructor(originalSelected: SelectableObject[]) {
-    super();
-    this.originalSelected = originalSelected;
-  }
-}
-
-/** Holds the data associated with a "remove transition" action. */
-class RemoveTransitionActionData extends ActionData {
-  /** The transition removed in this action. */
-  public transition: TransitionWrapper;
-}
-
-/** Holds the data associated with a "add/remove token to transition" action. */
-class SetTransitionAcceptsTokenData extends ActionData {
-  /** The transition modified in this action. */
-  public transition: TransitionWrapper;
-
-  /** The token added to or removed from the transition in this action. */
-  public token: TokenWrapper;
-}
-
-/** Holds the data associated with an "add token to automaton" action. */
-class AddTokenActionData extends ActionData {
-  /** The token created in this action. */
-  public token: TokenWrapper;
-}
-
-/** Holds the data associated with a "remove token from automaton" action. */
-class RemoveTokenActionData extends ActionData {
-  /** The token removed in this action. */
-  public token: TokenWrapper;
-
-  /**
-   * Transitions using this token at the time of this action, which must
-   * also have the token removed from them.
-   */
-  public transitionsUsingToken: TransitionWrapper[];
-}
-
-/** Holds the data associated with a "set token symbol" action. */
-class SetTokenSymbolActionData extends ActionData {
-  /** The symbol for this token before this action. */
-  public oldSymbol: string;
-
-  /** The symbol for this token after this action. */
-  public newSymbol: string;
-
-  /** The token modified in this action. */
-  public token: TokenWrapper;
-}
-
-/** Holds the data associated with a "paste" action. */
-class PasteActionData extends ActionData {
-  /** The nodes created in this action. */
-  public nodes: NodeWrapper[] = [];
-
-  /** The transitions created in this action. */
-  public transitions: TransitionWrapper[] = [];
-
-  /** The objects selected before the paste */
-  public originalSelected: SelectableObject[] = [];
-
-  constructor(originalSelected: SelectableObject[]) {
-    super();
-    this.originalSelected = originalSelected;
-  }
-}
-
-/** Holds the data associated with a "cut" action. */
-class CutActionData extends ActionData {
-  /** The nodes removed in this action. */
-  public nodes: NodeWrapper[] = [];
-
-  /** The transitions removed in this action. */
-  public transitions: TransitionWrapper[] = [];
-
-  /** Whether any of the nodes removed were the start node. */
-  public wasStartNode: boolean = false;
-
-  public originalSelected: SelectableObject[] = [];
-
-  constructor(originalSelected: SelectableObject[]) {
-    super();
-    this.originalSelected = originalSelected;
-  }
-}
-
-/** Holds the data associated with a "create comment" action. */
-class CreateCommentActionData extends ActionData {
-  /** The X coordinate where the comment region is created. */
-  public x: number;
-
-  /** The Y coordinate where the comment region is created. */
-  public y: number;
-
-  /** The comment region created in this action. */
-  public commentRegion: CommentRegion;
-}
-
-/** Holds the data associated with a "move comments" action. */
-class MoveCommentsActionData extends ActionData {
-  /** The amount by which comments were moved in this action. */
-  public delta: Vector2d;
-
-  /** The comments moved in this action. */
-  public comments: CommentRegion[];
-}
-
-/** Holds the data associated with a "set comments color" action. */
-class SetCommentsColorActionData extends ActionData {
-  /** The old colors before the action was taken */
-  public oldColors: string[];
-
-  /** The old color after the action was taken */
-  public newColor: string;
-
-  public comments: CommentRegion[];
-}
-
-/** Holds the data associated with a "set comments text" action. */
-class SetCommentsTextActionData extends ActionData {
-  /** The old texts before the action was taken */
-  public oldTexts: string[];
-
-  /** The old text after the action was taken */
-  public newText: string;
-
-  public comments: CommentRegion[];
-}
-
-/** Holds the data associated with a "resize comment" action. */
-class ResizeCommentActionData extends ActionData {
-  /** The old size before the action was taken */
-  public oldSize: Vector2d;
-
-  /** The old position before the action was taken */
-  public oldPos: Vector2d;
-
-  /** The comment being resized in this action. */
-  public comment: CommentRegion;
 }
 
 /** Holds the data associated with a "change selection" action */

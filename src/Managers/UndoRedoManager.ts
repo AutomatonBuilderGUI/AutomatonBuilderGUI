@@ -1,5 +1,5 @@
 import { v4 as uuidv4 } from "uuid";
-import StateManager from "./StateManager";
+import StateManager from "../Managers/StateManager";
 
 export default class UndoRedoManager {
   // The stack we push actions onto and pop off.

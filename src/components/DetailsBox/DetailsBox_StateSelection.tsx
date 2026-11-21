@@ -1,9 +1,10 @@
 import { useState, useEffect } from "react";
 import NodeWrapper from "../../NodeWrapper";
 import SelectableObject from "../../SelectableObject";
-import StateManager from "../../StateManager";
+import StateManager from "../../Managers/StateManager";
 import { useActionStack } from "../../utilities/ActionStackUtilities";
 import { CoreListItem, CoreListItem_Left, ListItem } from "../ListItem";
+import { StackableAction } from "../../Managers/StackableAction";
 
 interface DetailsBox_StateSelectionProps {
   nodeWrappers: NodeWrapper[];
@@ -50,7 +51,7 @@ export default function DetailsBox_StateSelection(
   let updateNodeIsAccept = (isAccept: boolean) => {
     if (props.isDebugActive) return true;
     setIsAccept(isAccept);
-    StateManager.setNodesIsAccept(nodeWrappers, isAccept);
+    StackableAction.setNodesIsAccept(nodeWrappers, isAccept);
   };
 
   const [_, currentStackLocation] = useActionStack();

@@ -2,7 +2,7 @@ import { SetStateAction, useState, useEffect } from "react";
 import { testStringOnAutomata } from "./TestStringOnAutomata";
 import { BsFillClipboardCheckFill } from "react-icons/bs";
 import InformationBox, { InformationBoxType } from "./InformationBox";
-import StateManager from "../StateManager";
+import StateManager from "../Managers/StateManager";
 
 export default function TestStringWindow() {
   const [testString, setTestString] = useState("");

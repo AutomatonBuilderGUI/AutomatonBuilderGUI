@@ -1,9 +1,10 @@
 import { Tool } from "../Tool";
 import ToolButton from "./ToolButton";
-import StateManager from "../StateManager";
+import StateManager from "../Managers/StateManager";
 import { useRef } from "react";
 import { useState } from "react";
 import { ChangeEvent } from "react";
+import { uploadJSON, downloadJSON, loadAutomaton } from "../Managers/FileIO";
 import {
   BsCursor,
   BsCursorFill,
@@ -24,6 +25,13 @@ import {
   BsChatSquareText,
   BsChatSquareTextFill,
 } from "react-icons/bs";
+import {
+  zoomIn,
+  zoomOut,
+  resetZoom,
+  centerStage,
+  fitAutomatonOnScreen,
+} from "../Managers/ZoomManager";
 import { TbZoomReset } from "react-icons/tb";
 import { GrGrid } from "react-icons/gr";
 import ConfirmationDialog from "./ConfirmationDialog";
@@ -153,7 +161,7 @@ export default function Toolbox(props: React.PropsWithChildren<ToolboxProps>) {
   };
 
   const handleFileUpload = (e: ChangeEvent<HTMLInputElement>) => {
-    StateManager.uploadJSON(e)
+    uploadJSON(e)
       .then((parsedData) => {
         const automatonCheck = StateManager.isValidAutomaton(parsedData);
         if (automatonCheck[0] == false) {
@@ -161,7 +169,7 @@ export default function Toolbox(props: React.PropsWithChildren<ToolboxProps>) {
           return;
         }
 
-        StateManager.loadAutomaton(parsedData);
+        loadAutomaton(parsedData);
       })
       .catch((response) => {
         showError("The file does not contain valid JSON.");
@@ -259,7 +267,7 @@ export default function Toolbox(props: React.PropsWithChildren<ToolboxProps>) {
         ></ActionButton>
 
         <ActionButton
-          onClick={StateManager.downloadJSON}
+          onClick={downloadJSON}
           icon={<BsDownload />}
           title="Download from JSON"
           bgColor="bg-amber-500"
@@ -279,35 +287,35 @@ export default function Toolbox(props: React.PropsWithChildren<ToolboxProps>) {
         ></ActionButton>
         {/* Reset Zoom Button */}
         <ActionButton
-          onClick={StateManager.resetZoom}
+          onClick={resetZoom}
           icon={<TbZoomReset />}
           title="Reset Zoom"
           bgColor="bg-blue-500"
         ></ActionButton>
         {/* Fit Automaton on Screen Button */}
         <ActionButton
-          onClick={StateManager.fitAutomatonOnScreen}
+          onClick={fitAutomatonOnScreen}
           icon={<MdOutlineFitScreen />}
           title="Fit Automaton on Screen"
           bgColor="bg-blue-500"
         ></ActionButton>
         {/* Center Stage Button */}
         <ActionButton
-          onClick={StateManager.centerStage}
+          onClick={centerStage}
           icon={<BiReset />}
           title="Center Stage"
           bgColor="bg-green-500"
         ></ActionButton>
         {/* Zoom In Button */}
         <ActionButton
-          onClick={StateManager.zoomIn}
+          onClick={zoomIn}
           icon={<BsZoomIn />}
           title="Zoom In"
           bgColor="bg-blue-500"
         ></ActionButton>
         {/* Zoom Out Button */}
         <ActionButton
-          onClick={StateManager.zoomOut}
+          onClick={zoomOut}
           icon={<BsZoomOut />}
           title="Zoom Out"
           bgColor="bg-blue-500"
