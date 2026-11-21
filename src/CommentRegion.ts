@@ -4,6 +4,8 @@ import { Tool } from "./Tool";
 import { Vector2d } from "konva/lib/types";
 import SelectableObject from "./SelectableObject";
 import { v4 as uuidv4 } from "uuid";
+import { Group } from "konva/lib/Group";
+import { KonvaEventObject } from "konva/lib/Node";
 
 export default class CommentRegion extends SelectableObject {
   // make the color configurable later
@@ -86,6 +88,8 @@ export default class CommentRegion extends SelectableObject {
     }
     this.commentRect.fill(newColor + "80");
     this.regionRect.fill(newColor + "80");
+    this.commentRect.shadowColor(newColor);
+    this.regionRect.shadowColor(newColor);
   }
 
   public createKonvaObjects(x: number, y: number, w: number, h: number) {
@@ -100,6 +104,9 @@ export default class CommentRegion extends SelectableObject {
       strokeWidth: CommentRegion.StrokeWidth,
       width: w,
       height: h,
+      shadowColor: this.color,
+      shadowBlur: 10,
+      shadowEnabled: false,
     });
 
     this.commentText = new Konva.Text({
@@ -128,6 +135,9 @@ export default class CommentRegion extends SelectableObject {
       strokeWidth: CommentRegion.StrokeWidth,
       width: this.commentText.width(),
       height: this.commentText.height(),
+      shadowColor: this.color,
+      shadowBlur: 10,
+      shadowEnabled: false,
     });
 
     // Add elements to the node group in order
@@ -144,6 +154,7 @@ export default class CommentRegion extends SelectableObject {
     this.nodeGroup.on("dragmove", (ev) => this.onDragMove.call(this, ev));
     this.nodeGroup.on("dragend", (ev) => this.onDragEnd.call(this, ev));
     this.nodeGroup.on("mouseleave", (ev) => this.onMouseLeave.call(this, ev));
+    this.nodeGroup.on("mouseenter", (ev) => this.onMouseEnter(ev));
 
     // Only do this in regionRect to prevent mouse icon changing when hovering over commentRect
     this.regionRect.on("mousemove", (ev) => this.onMouseMove.call(this, ev));
@@ -185,11 +196,23 @@ export default class CommentRegion extends SelectableObject {
     };
   }
 
+  public onMouseEnter(ev: Konva.KonvaEventObject<MouseEvent>) {
+    if (
+      StateManager.currentTool === Tool.Select ||
+      StateManager.currentTool === Tool.Transitions
+    ) {
+      this.regionRect.shadowEnabled(true);
+      this.commentRect.shadowEnabled(true);
+    }
+  }
+
   public onMouseLeave(ev: Konva.KonvaEventObject<MouseEvent>) {
     if (StateManager.resizeComment == this) {
       return;
     }
     ev.target.getStage().container().style.cursor = "default";
+    this.regionRect.shadowEnabled(false);
+    this.commentRect.shadowEnabled(false);
   }
 
   public onMouseMove(ev: Konva.KonvaEventObject<MouseEvent>) {

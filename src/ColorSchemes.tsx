@@ -1,7 +1,7 @@
 /**
  * The colors and visual parameters to use when dark mode is disabled.
  */
-export const LightColorScheme = {
+export const LightColorScheme: ColorScheme = {
   tentativeTransitionArrowColor: "red",
   selectedNodeStrokeColor: "#018ED5",
 
@@ -12,9 +12,15 @@ export const LightColorScheme = {
 
   nodeLabelColor: "black",
 
-  newConnectionGlowColor: "#2FDFFB",
+  newConnectionGlowColor: "red",
   newConnectionShadowOpacity: 1,
   newConnectionShadowBlur: 10,
+
+  hoverNodeGlowColor: "#2FDFFB",
+  hoverNodeShadowOpacity: 1,
+  hoverNodeShadowBlur: 10,
+
+  hoverTransitionGlowColor: "red",
 
   nodeDragDropShadowColor: "#000000",
   nodeDragDropShadowOpacity: 0.2,
@@ -39,7 +45,7 @@ export const LightColorScheme = {
 /**
  * The colors and visual parameters to use when dark mode is enabled.
  */
-export const DarkColorScheme = {
+export const DarkColorScheme: ColorScheme = {
   tentativeTransitionArrowColor: "red",
   selectedNodeStrokeColor: "#018ED5",
 
@@ -50,9 +56,15 @@ export const DarkColorScheme = {
 
   nodeLabelColor: "white",
 
-  newConnectionGlowColor: "#2FDFFB",
+  newConnectionGlowColor: "red",
   newConnectionShadowOpacity: 1,
   newConnectionShadowBlur: 10,
+
+  hoverNodeGlowColor: "#2FDFFB",
+  hoverNodeShadowOpacity: 1,
+  hoverNodeShadowBlur: 10,
+
+  hoverTransitionGlowColor: "red",
 
   nodeDragDropShadowColor: "#FFFFFF",
   nodeDragDropShadowOpacity: 0.3,
@@ -95,6 +107,15 @@ export interface ColorScheme {
   nodeDragDropShadowColor: string;
   nodeDragDropShadowOpacity: number;
   nodeDragDropShadowBlur: number;
+
+  hoverNodeGlowColor: string;
+  hoverNodeShadowOpacity: number;
+  hoverNodeShadowBlur: number;
+
+  hoverTransitionGlowColor: string;
+
+  nodeDebugHighlightColor: string;
+  transitionDebugColor: string;
 
   transitionSelectedArrowColor: string;
   transitionArrowColor: string;

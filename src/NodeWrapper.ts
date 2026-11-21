@@ -55,6 +55,8 @@ export default class NodeWrapper extends SelectableObject {
   private _isSelected: boolean = false;
   private _isDebugHighlighted: boolean = false;
 
+  private _isHovered: boolean = false;
+
   /**
    * Whether or not this node is an accepting node.
    *
@@ -349,6 +351,23 @@ export default class NodeWrapper extends SelectableObject {
   }
 
   /**
+   * Updates the appearance of the node to indicate that it can be selected
+   */
+  public enableHoverGlow() {
+    this.nodeBackground.shadowColor(
+      StateManager.colorScheme.hoverNodeGlowColor,
+    );
+    this.nodeBackground.shadowOffset({ x: 0, y: 0 });
+    this.nodeBackground.shadowOpacity(
+      StateManager.colorScheme.hoverNodeShadowOpacity,
+    );
+    this.nodeBackground.shadowBlur(
+      StateManager.colorScheme.hoverNodeShadowBlur,
+    );
+    this.nodeBackground.shadowEnabled(true);
+  }
+
+  /**
    * Disables the drop shadow effect on this node, used to indicate it is being
    * "set down" by the user.
    */
@@ -402,6 +421,11 @@ export default class NodeWrapper extends SelectableObject {
     ) {
       StateManager.tentativeTransitionTarget = this;
       this.enableNewConnectionGlow();
+    } else if (
+      StateManager.currentTool === Tool.Select ||
+      StateManager.currentTool == Tool.Transitions
+    ) {
+      this.enableHoverGlow();
     }
   }
 
@@ -418,8 +442,11 @@ export default class NodeWrapper extends SelectableObject {
         StateManager.tentativeTransitionTarget === this
       ) {
         StateManager.tentativeTransitionTarget = null;
-        this.disableShadowEffects();
       }
+      this.disableShadowEffects();
+    }
+    if (StateManager.currentTool === Tool.Select) {
+      this.disableShadowEffects();
     }
   }
 

@@ -15,6 +15,7 @@ export default class TransitionWrapper extends SelectableObject {
   public static readonly LoopTransitionDist = 20;
 
   private arrowObject: Konva.Arrow;
+  private hoverObject: Konva.Arrow;
   private labelObject: Konva.Text;
   private labelCenterDebugObject: Konva.Circle;
   public konvaGroup: Konva.Group;
@@ -120,6 +121,24 @@ export default class TransitionWrapper extends SelectableObject {
       },
     });
 
+    this.hoverObject = new Konva.Arrow({
+      x: 0,
+      y: 0,
+      points: [0, 0, 0, 0],
+      stroke: StateManager.colorScheme.hoverTransitionGlowColor,
+      fill: StateManager.colorScheme.hoverTransitionGlowColor,
+      shadowColor: StateManager.colorScheme.hoverTransitionGlowColor,
+      strokeWidth: 10,
+      lineJoin: "round",
+      pointerLength: 10,
+      pointerWidth: 10,
+      shadowBlur: 20,
+      shadowEnabled: true,
+      opacity: 0.4,
+      shadowOpacity: 1,
+      visible: false,
+    });
+
     this.labelCenterDebugObject = new Konva.Circle({
       x: 0,
       y: 0,
@@ -141,6 +160,7 @@ export default class TransitionWrapper extends SelectableObject {
       lineJoin: "round",
     });
 
+    this.konvaGroup.add(this.hoverObject);
     this.konvaGroup.add(this.arrowObject);
     this.konvaGroup.add(this.labelCenterDebugObject);
     this.konvaGroup.add(this.labelObject);
@@ -148,6 +168,8 @@ export default class TransitionWrapper extends SelectableObject {
     this.updatePoints();
 
     this.konvaGroup.on("click", (ev) => this.onClick.call(this, ev));
+    this.konvaGroup.on("mouseenter", (ev) => this.onMouseEnter(ev));
+    this.konvaGroup.on("mouseleave", (ev) => this.onMouseLeave(ev));
     this._sourceNode.nodeGroup.on("move.transition", (ev) =>
       this.updatePoints.call(this),
     );
@@ -357,6 +379,8 @@ export default class TransitionWrapper extends SelectableObject {
   updateArrow(pointsArray: number[], tension: number) {
     this.arrowObject.points(pointsArray);
     this.arrowObject.tension(tension);
+    this.hoverObject.points(pointsArray);
+    this.hoverObject.tension(tension);
   }
 
   /** Updates the position of the token label to the given position. */
@@ -398,6 +422,21 @@ export default class TransitionWrapper extends SelectableObject {
       } else {
         StateManager.addToSelection([this]);
       }
+    }
+  }
+
+  public onMouseEnter(ev: Konva.KonvaEventObject<MouseEvent>) {
+    if (
+      StateManager.currentTool === Tool.Select ||
+      StateManager.currentTool === Tool.Transitions
+    ) {
+      this.hoverObject.show();
+    }
+  }
+
+  public onMouseLeave(ev: Konva.KonvaEventObject<MouseEvent>) {
+    if (this.hoverObject.isVisible()) {
+      this.hoverObject.hide();
     }
   }
 
