@@ -32,6 +32,7 @@ import { useActionStack } from "./utilities/ActionStackUtilities";
 import { GrTest } from "react-icons/gr";
 import TestCasesPanel from "./components/TestCasesPanel";
 import BuildGitInfo from "./components/BuildGitInfo";
+import { toolForShortcut } from "./toolShortcuts";
 
 function App({ defaultDarkMode }: { defaultDarkMode: boolean }) {
   const [currentTool, setCurrentTool] = useState(Tool.States);
@@ -77,16 +78,9 @@ function App({ defaultDarkMode }: { defaultDarkMode: boolean }) {
         return;
       }
       if (StateManager.safeToAct) {
-        if (ev.code === "KeyA") {
-          setCurrentTool(Tool.States);
-        } else if (ev.code === "KeyT") {
-          setCurrentTool(Tool.Transitions);
-        } else if (ev.code === "KeyS") {
-          setCurrentTool(Tool.Select);
-        } else if (ev.code === "KeyR") {
-          setCurrentTool(Tool.Comment);
-        } else if (ev.code === "KeyB") {
-          setCurrentTool(Tool.SelectBox);
+        const tool = toolForShortcut(ev.code);
+        if (tool !== undefined) {
+          setCurrentTool(tool);
         }
       }
     });
